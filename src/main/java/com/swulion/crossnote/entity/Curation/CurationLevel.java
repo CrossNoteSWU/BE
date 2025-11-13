@@ -1,4 +1,4 @@
-package com.swulion.crossnote.entity;
+package com.swulion.crossnote.entity.Curation;
 
 public enum CurationLevel {
     LEVEL_1, // 일반/기초

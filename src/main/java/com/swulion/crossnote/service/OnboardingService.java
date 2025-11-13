@@ -4,6 +4,7 @@ import com.swulion.crossnote.dto.Onboarding.OnboardingDetailResponseDto;
 import com.swulion.crossnote.dto.Onboarding.OnboardingGoogleRequestDto;
 import com.swulion.crossnote.dto.Onboarding.OnboardingResponseDto;
 import com.swulion.crossnote.entity.*;
+import com.swulion.crossnote.entity.Curation.CurationLevel;
 import com.swulion.crossnote.repository.CategoryRepository;
 import com.swulion.crossnote.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

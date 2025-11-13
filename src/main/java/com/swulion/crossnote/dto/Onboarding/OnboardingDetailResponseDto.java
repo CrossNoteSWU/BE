@@ -1,6 +1,6 @@
 package com.swulion.crossnote.dto.Onboarding;
 
-import com.swulion.crossnote.entity.CurationLevel;
+import com.swulion.crossnote.entity.Curation.CurationLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
