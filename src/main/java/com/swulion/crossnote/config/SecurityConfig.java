@@ -7,6 +7,7 @@ import com.swulion.crossnote.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -39,7 +40,7 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/swagger-resources/**",
             "/v3/api-docs/**",
-            "/login"
+            "/login",
     };
 
     @Bean
@@ -68,13 +69,18 @@ public class SecurityConfig {
                 // API 엔드포인트별 접근 권한을 설정
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                // 로그인/로그아웃 관련은 모두 허용
+                                // 인증이 필요 없는 API (Public)
                                 .requestMatchers("/auth/logout", "/auth/local/**", "/auth/login/**", "/auth/refresh").permitAll()
-                                .requestMatchers(allowUrls).permitAll()  // 허용 URL 설정
+                                .requestMatchers(allowUrls).permitAll()
+                                .requestMatchers(HttpMethod.GET, "/curation", "/curation/{curationId}").permitAll()
+
+                                // 인증이 필수인 API (Private)
+                                .requestMatchers("/curation/personal").authenticated()
+                                .requestMatchers(HttpMethod.POST, "/curation/{curationId}/like", "/curation/{curationId}/scrap").authenticated()
+
                                 // 그 외 모든 요청은 인증 필요
                                 .anyRequest().authenticated()
                 )
-
 
 
                 // JWT 필터
