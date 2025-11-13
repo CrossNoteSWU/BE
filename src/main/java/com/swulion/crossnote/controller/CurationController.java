@@ -5,6 +5,7 @@ import com.swulion.crossnote.dto.Curation.CurationFeedDto;
 import com.swulion.crossnote.dto.Curation.CurationToggleResponseDto;
 import com.swulion.crossnote.entity.User;
 import com.swulion.crossnote.service.CurationService;
+import com.swulion.crossnote.service.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +29,9 @@ public class CurationController {
      */
     @GetMapping("/personal")
     public ResponseEntity<List<CurationFeedDto>> getPersonilzedFeed(
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        User user = userDetails.getUser();
         List<CurationFeedDto> curationFeedDtos = curationService.getPersonalizedFeed(user);
         return ResponseEntity.ok(curationFeedDtos);
     }
@@ -54,7 +57,9 @@ public class CurationController {
     @GetMapping("/{curationId}")
     public ResponseEntity<CurationDetailDto> getCurationDetail(
             @PathVariable Long curationId,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        User user = userDetails.getUser();
         CurationDetailDto curationDetailDtos = curationService.getCurationDetail(curationId, user);
         return ResponseEntity.ok(curationDetailDtos);
     }
@@ -66,7 +71,9 @@ public class CurationController {
     @PostMapping("/{curationId}/like")
     public ResponseEntity<CurationToggleResponseDto> toggleCurationLike(
             @PathVariable Long curationId,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        User user = userDetails.getUser();
         CurationToggleResponseDto responseDtos = curationService.toggleCurationLike(curationId, user);
         return ResponseEntity.ok(responseDtos);
     }
@@ -78,7 +85,9 @@ public class CurationController {
     @PostMapping("/{curationId}/scrap")
     public ResponseEntity<CurationToggleResponseDto> toggleCurationScrap(
             @PathVariable Long curationId,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        User user = userDetails.getUser();
         CurationToggleResponseDto responseDtos = curationService.toggleCurationScrap(curationId, user);
         return ResponseEntity.ok(responseDtos);
     }
