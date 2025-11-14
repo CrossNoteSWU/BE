@@ -44,36 +44,75 @@ public class CurationService {
 
     private final NaverNewsClient naverNewsClient;
     private final GeminiService geminiService;
+    private final TerminologyService terminologyService;
     // (YoutubeClient, DbpiaClient 등 추가 주입 필요)
     
-    @Scheduled(cron = "0 0 4 * * *") // 매일 새벽 4시 0분 0초
+//    @Scheduled(cron = "0 0 4 * * *") // 매일 새벽 4시 0분 0초
+//    @Transactional
+//    public void createDailyCurations() {
+//        log.info("데일리 큐레이션 생성 작업을 시작합니다...");
+//
+//        // 카테고리 목록 가져오기
+//        List<Category> categories = categoryRepository.findByParentCategoryIdIsNotNull();
+//
+//        for (Category category : categories) {
+//            // 인사이트 타입 생성
+//            createInsightCurationForCategory(category);
+//            // 크로스노트 타입 생성
+//            createCrossNoteCurationForCategory(category);
+//        }
+//        log.info("데일리 큐레이션 생성 작업 완료.");
+//    }
+
+    // 테스트용 - 네이버1, 유튜브1, 제미나이4, 총 6회만 호출하도록
     @Transactional
     public void createDailyCurations() {
         log.info("데일리 큐레이션 생성 작업을 시작합니다...");
 
-        // 카테고리 목록 가져오기
+        // 29개 세부 카테고리 목록 가져오기
         List<Category> categories = categoryRepository.findByParentCategoryIdIsNotNull();
 
-        for (Category category : categories) {
-            // 인사이트 타입 생성
-            createInsightCurationForCategory(category);
-            // 크로스노트 타입 생성
-            createCrossNoteCurationForCategory(category);
+        // 테스트를 위해 1개만 실행
+        if (categories.isEmpty()) {
+            log.warn("테스트할 카테고리가 DB에 없습니다.");
+            return;
         }
+
+        Category testCategory = categories.get(0); // 리스트의 첫 번째 카테고리 1개만 선택
+        log.warn("[TEST MODE] {} 카테고리 1개만 테스트 생성합니다.", testCategory.getCategoryName());
+
+        // for (Category category : categories) { // 기존 루프 주석 처리
+
+        // '인사이트' 타입 생성 (뉴스 기반)
+        createInsightCurationForCategory(testCategory); // 1개만 실행
+        // '크로스노트' 타입 생성 (논문 기반)
+        createCrossNoteCurationForCategory(testCategory); // 1개만 실행
+
+        // } ///️ 기존 루프 주석 처리
+
         log.info("데일리 큐레이션 생성 작업 완료.");
     }
 
     private void createInsightCurationForCategory(Category category) {
+        // 뉴스 아이템 가져오기
         NaverNewsResponseDto.Item newsItem = naverNewsClient.fetchNews(category.getCategoryName());
         if (newsItem == null) {
             log.warn("{} 카테고리의 뉴스를 찾을 수 없습니다.", category.getCategoryName());
             return;
         }
+
         String originalText = newsItem.getTitle() + " " + newsItem.getDescription();
         String sourceUrl = newsItem.getLink();
 
-        // LEVEL_1 (일반/기초) 큐레이션 생성
+        // AI 콘텐츠 생성
         AiGeneratedContentDto contentA = geminiService.generateContent(originalText, CurationLevel.LEVEL_1);
+        AiGeneratedContentDto contentB = geminiService.generateContent(originalText, CurationLevel.LEVEL_2);
+
+        // 전문 용어 농도 기반 Level 계산
+        terminologyService.assignLevel(contentA);
+        terminologyService.assignLevel(contentB);
+
+        // LEVEL_1 큐레이션 저장
         Curation curationA = Curation.builder()
                 .category(category)
                 .curationType(CurationType.INSIGHT)
@@ -81,12 +120,11 @@ public class CurationService {
                 .imageUrl(null)
                 .title(contentA.getTitle())
                 .description(contentA.getDescription())
-                .curationLevel(CurationLevel.LEVEL_1)
+                .curationLevel(contentA.getCurationLevel())
                 .build();
         curationRepository.save(curationA);
 
-        // LEVEL_2 (전문/심화) 큐레이션 생성
-        AiGeneratedContentDto contentB = geminiService.generateContent(originalText, CurationLevel.LEVEL_2);
+        // LEVEL_2 큐레이션 저장
         Curation curationB = Curation.builder()
                 .category(category)
                 .curationType(CurationType.INSIGHT)
@@ -94,7 +132,7 @@ public class CurationService {
                 .imageUrl(null)
                 .title(contentB.getTitle())
                 .description(contentB.getDescription())
-                .curationLevel(CurationLevel.LEVEL_2)
+                .curationLevel(contentB.getCurationLevel())
                 .build();
         curationRepository.save(curationB);
 

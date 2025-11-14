@@ -7,15 +7,19 @@ import com.swulion.crossnote.entity.User;
 import com.swulion.crossnote.service.CurationService;
 import com.swulion.crossnote.service.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/curation")
 @RequiredArgsConstructor
@@ -90,5 +94,26 @@ public class CurationController {
         User user = userDetails.getUser();
         CurationToggleResponseDto responseDtos = curationService.toggleCurationScrap(curationId, user);
         return ResponseEntity.ok(responseDtos);
+    }
+
+    /*
+     * [테스트용] 큐레이션 생성 스케줄러를 수동으로 실행
+     * (주의: 실제 Naver/Gemini API를 호출)
+     * [POST] /curation/test/run-batch
+     */
+    @PostMapping("/test/run-batch")
+    public ResponseEntity<String> runDailyCurationBatch() {
+        log.warn("=== [TEST] 수동 큐레이션 생성 작업을 시작합니다. ===");
+        try {
+            // (CurationService의 스케줄링 메서드를 직접 호출)
+            curationService.createDailyCurations();
+            log.warn("=== [TEST] 수동 큐레이션 생성 작업 완료. ===");
+            return ResponseEntity.ok("수동 큐레이션 배치 작업 완료.");
+
+        } catch (Exception e) {
+            log.error("=== [TEST] 수동 큐레이션 생성 중 오류 발생 ===", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("배치 작업 실패: " + e.getMessage());
+        }
     }
 }
