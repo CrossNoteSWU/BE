@@ -58,6 +58,9 @@ public class Curation {
     @Builder.Default
     private Long scrapCount = 0L;
 
+    @Column(nullable = false)
+    private double terminologyDensity;
+
     public void incrementLikeCount() {
         this.likeCount++;
     }

@@ -50,7 +50,7 @@ public class CurationService {
     //private final NationalLibClient nationalLibClient;
 
     private final Random random = new Random(); // (랜덤 선택용)
-    
+
 //    @Scheduled(cron = "0 0 4 * * *") // 매일 새벽 4시 0분 0초
 //    @Transactional
 //    public void createDailyCurations() {
@@ -68,28 +68,29 @@ public class CurationService {
 //        log.info("데일리 큐레이션 생성 작업 완료.");
 //    }
 
-    // 테스트용
     @Transactional
     public void createDailyCurations() {
-        log.info("데일리 큐레이션 생성 작업을 시작합니다...");
+        log.info("데일리 큐레이션 생성 작업 시작 (29개 분야 × 4개)");
 
         List<Category> categories = categoryRepository.findByParentCategoryIdIsNotNull();
-
         if (categories.isEmpty()) {
-            log.warn("테스트할 카테고리가 DB에 없습니다.");
+            log.warn("DB에 생성 가능한 카테고리가 없습니다.");
             return;
         }
 
-        Category testCategory = categories.get(0);
-        log.warn("[TEST MODE] {} 카테고리 1개만 테스트 생성합니다.", testCategory.getCategoryName());
+        for (Category category : categories) {
+            // Level A (LEVEL_1)
+            createInsightCuration(category, CurationLevel.LEVEL_1);
+            createCrossNoteCuration(category, CurationLevel.LEVEL_1);
 
-        // '인사이트' 타입 생성
-        createInsightCurationForCategory(testCategory);
-        // '크로스노트' 타입 생성
-        createCrossNoteCurationForCategory(testCategory);
+            // Level B (LEVEL_2)
+            createInsightCuration(category, CurationLevel.LEVEL_2);
+            createCrossNoteCuration(category, CurationLevel.LEVEL_2);
+        }
 
         log.info("데일리 큐레이션 생성 작업 완료.");
     }
+
 
 //    // 테스트용 - 제미나이x. KCI와 NationalLib만
 //    // --- 2. [수정] 메서드 내용을 KCI와 NationalLib 호출 테스트로 덮어씁니다. ---
@@ -133,122 +134,68 @@ public class CurationService {
     /*
      * '인사이트' 큐레이션 생성 (기능 명세서 2.2-1: 모든 소스 사용)
      */
-    private void createInsightCurationForCategory(Category category) {
-        if (allClients.isEmpty()) {
-            log.warn("CurationSourceClient 구현체가 없습니다.");
-            return;
-        }
+    private void createInsightCuration(Category category, CurationLevel level) {
+        if (allClients.isEmpty()) return;
 
-        // 1. 모든 클라이언트 중 1개 랜덤 선택
         CurationSourceClient randomClient = allClients.get(random.nextInt(allClients.size()));
-        log.info("{} 카테고리 '인사이트' 생성 시도 (소스: {})", category.getCategoryName(), randomClient.getSourceType());
-
-        // 2. 선택된 클라이언트로부터 소스 가져오기
         CurationSourceDto source = randomClient.fetchSource(category.getCategoryName());
-        if (source == null) {
-            log.warn("{} 카테고리에서 소스({})를 찾을 수 없습니다.", category.getCategoryName(), randomClient.getSourceType());
-            return;
-        }
+        if (source == null) return;
 
-        // 3. (공통 로직) AI 생성 및 L1 저장
-        AiGeneratedContentDto contentA = geminiService.generateContent(source.getOriginalText(), CurationLevel.LEVEL_1);
-        terminologyService.assignLevel(contentA, category.getCategoryId());
+        //TerminologyService를 통해 원문 분석 (AI 생성 전에 실행)
+        TerminologyService.TermCountResult analysisResult =
+                terminologyService.analyzeSourceText(source.getOriginalText(), category.getCategoryId());
 
-        Curation curationA = Curation.builder()
+        AiGeneratedContentDto content = geminiService.generateContent(source.getOriginalText(), level);
+        // terminologyService.assignLevel(content, category.getCategoryId()); <-- [제거됨] AI 요약 난이도 덮어쓰기 로직 제거
+
+        Curation curation = Curation.builder()
                 .category(category)
                 .curationType(CurationType.INSIGHT)
                 .sourceUrl(source.getSourceUrl())
                 .imageUrl(source.getImageUrl())
-                .title(contentA.getTitle())
-                .description(contentA.getDescription())
-                .curationLevel(contentA.getCurationLevel())
+                .title(content.getTitle())
+                .description(content.getDescription())
+                .curationLevel(level) // 요청 레벨(L1/L2) 확정
+                .terminologyDensity(analysisResult.getDensity()) // 원문 분석 결과 저장
                 .build();
-        curationRepository.save(curationA);
-
-        // 4. (공통 로직) L2 생성 및 저장
-        AiGeneratedContentDto contentB = geminiService.generateContent(source.getOriginalText(), CurationLevel.LEVEL_2);
-        terminologyService.assignLevel(contentB, category.getCategoryId());
-
-        Curation curationB = Curation.builder()
-                .category(category)
-                .curationType(CurationType.INSIGHT)
-                .sourceUrl(source.getSourceUrl())
-                .imageUrl(source.getImageUrl())
-                .title(contentB.getTitle())
-                .description(contentB.getDescription())
-                .curationLevel(contentB.getCurationLevel())
-                .build();
-        curationRepository.save(curationB);
-
-        log.info("{} 카테고리 인사이트 큐레이션 (Level 1, 2) 생성 완료. (소스: {})", category.getCategoryName(), randomClient.getSourceType());
+        curationRepository.save(curation);
     }
 
     /*
      * '크로스노트' 큐레이션 생성 (기능 명세서 2.2-2: '공적문서' 제외)
      */
-    private void createCrossNoteCurationForCategory(Category category) {
-
-        // 1. 크로스노트용 클라이언트 필터링 ('DOCUMENT' 타입 제외)
+    private void createCrossNoteCuration(Category category, CurationLevel level) {
         List<CurationSourceClient> crossNoteClients = allClients.stream()
                 .filter(client -> !"DOCUMENT".equals(client.getSourceType()))
                 .collect(Collectors.toList());
+        if (crossNoteClients.isEmpty()) return;
 
-        if (crossNoteClients.isEmpty()) {
-            log.warn("크로스노트용 CurationSourceClient 구현체가 없습니다.");
-            return;
-        }
-
-        // 2. 크로스노트 클라이언트 중 1개 랜덤 선택
         CurationSourceClient randomClient = crossNoteClients.get(random.nextInt(crossNoteClients.size()));
-        log.info("{} 카테고리 '크로스노트' 생성 시도 (소스: {})", category.getCategoryName(), randomClient.getSourceType());
-
-        // 3. 소스 가져오기
         CurationSourceDto source = randomClient.fetchSource(category.getCategoryName());
-        if (source == null) {
-            log.warn("{} 카테고리에서 소스({})를 찾을 수 없습니다.", category.getCategoryName(), randomClient.getSourceType());
-            return;
-        }
+        if (source == null) return;
 
-        // 4. 크로스할 카테고리 찾기
+        // TerminologyService를 통해 원문 분석
+        TerminologyService.TermCountResult analysisResult =
+                terminologyService.analyzeSourceText(source.getOriginalText(), category.getCategoryId());
+
         Category crossCategory = findRandomCrossCategory(category);
-        if (crossCategory == null) {
-            log.warn("크로스할 카테고리를 찾을 수 없습니다. (원본: {})", category.getCategoryName());
-            return;
-        }
+        if (crossCategory == null) return;
 
-        // 5. (공통 로직) AI 생성 및 L1 저장
-        AiGeneratedContentDto contentA = geminiService.generateContent(source.getOriginalText(), CurationLevel.LEVEL_1);
-        terminologyService.assignLevel(contentA);
+        AiGeneratedContentDto content = geminiService.generateContent(source.getOriginalText(), level);
+        // terminologyService.assignLevel(content); <-- [제거됨] AI 요약 난이도 덮어쓰기 로직 제거
 
-        Curation curationA = Curation.builder()
-                .category(category)
-                .crossCategory(crossCategory) // (크로스 카테고리 설정)
-                .curationType(CurationType.CROSSNOTE) // (타입: CROSSNOTE)
-                .sourceUrl(source.getSourceUrl())
-                .imageUrl(source.getImageUrl())
-                .title(contentA.getTitle())
-                .description(contentA.getDescription())
-                .curationLevel(contentA.getCurationLevel())
-                .build();
-        curationRepository.save(curationA);
-
-        // 6. (공통 로직) L2 생성 및 저장
-        AiGeneratedContentDto contentB = geminiService.generateContent(source.getOriginalText(), CurationLevel.LEVEL_2);
-        terminologyService.assignLevel(contentB);
-
-        Curation curationB = Curation.builder()
+        Curation curation = Curation.builder()
                 .category(category)
                 .crossCategory(crossCategory)
                 .curationType(CurationType.CROSSNOTE)
                 .sourceUrl(source.getSourceUrl())
                 .imageUrl(source.getImageUrl())
-                .title(contentB.getTitle())
-                .description(contentB.getDescription())
-                .curationLevel(contentB.getCurationLevel())
+                .title(content.getTitle())
+                .description(content.getDescription())
+                .curationLevel(level) // 요청 레벨(L1/L2) 확정
+                .terminologyDensity(analysisResult.getDensity()) // 원문 분석 결과 저장
                 .build();
-        curationRepository.save(curationB);
-
-        log.info("{} x {} 카테고리 크로스노트 큐레이션 (Level 1, 2) 생성 완료. (소스: {})", category.getCategoryName(), crossCategory.getCategoryName(), randomClient.getSourceType());
+        curationRepository.save(curation);
     }
 
     // 2.1. 개인화 피드 로직
@@ -272,16 +219,74 @@ public class CurationService {
                         preferenceCategoryIds, userLevel, startOfToday
                 );
 
-        // 5. '큐레이션 생성 프로세스'의 우선순위에 따라 정렬
-        candidates.sort(Comparator
+        // 5. 유형별로 분리하고, 우선순위 2 (최신성) 기준으로 정렬 (재할당 로직을 위한 준비)
+        Map<CurationType, List<Curation>> groupedCandidates = candidates.stream()
+                .sorted(Comparator.comparing(Curation::getCreatedAt).reversed())
+                .collect(Collectors.groupingBy(
+                        Curation::getCurationType,
+                        LinkedHashMap::new, // 순서 유지를 위해 LinkedHashMap 사용
+                        Collectors.toList()
+                ));
+
+        // 최종 믹스 리스트
+        List<Curation> finalMix = new ArrayList<>();
+
+        // 6. 확보 및 재할당 로직 구현 (할당량: CN 2, IN 2, BC 2)
+        int targetCN = 2;
+        int targetIN = 2;
+        int targetBC = 2;
+        int totalTarget = targetCN + targetIN + targetBC;
+
+        // 초기 확보
+        List<Curation> cnList = groupedCandidates.getOrDefault(CurationType.CROSSNOTE, Collections.emptyList());
+        List<Curation> inList = groupedCandidates.getOrDefault(CurationType.INSIGHT, Collections.emptyList());
+        List<Curation> bcList = groupedCandidates.getOrDefault(CurationType.BEST_COLUMN, Collections.emptyList());
+
+        // 확보된 초기 수량 (잔여분 계산을 위해 확보 후 리스트에서 제거)
+        int securedCN = Math.min(cnList.size(), targetCN);
+        int securedIN = Math.min(inList.size(), targetIN);
+        int securedBC = Math.min(bcList.size(), targetBC);
+
+        finalMix.addAll(cnList.subList(0, securedCN));
+        finalMix.addAll(inList.subList(0, securedIN));
+        finalMix.addAll(bcList.subList(0, securedBC));
+
+        int needed = totalTarget - finalMix.size();
+
+        // 재할당 시작 (최대 6개가 될 때까지)
+        // 재할당 우선순위: CN > IN
+        if (needed > 0) {
+            // 잔여분 리스트 생성 (초기 확보된 콘텐츠는 제외)
+            List<Curation> remainingCN = cnList.subList(securedCN, cnList.size());
+            List<Curation> remainingIN = inList.subList(securedIN, inList.size());
+            // BC는 재할당 우선순위가 낮으므로, 잔여분을 사용하지 않고 CN/IN만 사용
+
+            // 1. CN 잔여분을 우선 사용
+            for (int i = 0; i < remainingCN.size() && needed > 0; i++) {
+                finalMix.add(remainingCN.get(i));
+                needed--;
+            }
+
+            // 2. IN 잔여분 사용
+            for (int i = 0; i < remainingIN.size() && needed > 0; i++) {
+                finalMix.add(remainingIN.get(i));
+                needed--;
+            }
+
+            // 3. (옵션) BC 잔여분 사용 - 문서에는 명확히 언급 없으나, 콘텐츠 부족 시 채우는 역할
+            // if (needed > 0) { ... }
+        }
+
+        // 7. 최종 믹스에 대해 우선순위 1 & 2 정렬 (혹시 재할당된 콘텐츠 순서가 꼬였을 경우 대비)
+        finalMix.sort(Comparator
                 .comparing((Curation c) -> getPriority(c.getCurationType()))
                 .thenComparing(Curation::getCreatedAt).reversed()
         );
 
-        // 6. 최대 6개로 제한하여 반환
-        return candidates.stream()
-                .limit(6)
-                .map(CurationFeedDto::new) // DTO로 변환
+        // 8. 최대 6개로 제한하여 반환 (needed 로직으로 6개 내외가 되지만, 안전장치)
+        return finalMix.stream()
+                .limit(totalTarget)
+                .map(CurationFeedDto::new)
                 .collect(Collectors.toList());
     }
 
@@ -345,7 +350,7 @@ public class CurationService {
             isLiked = likeRepository.existsByUserAndTargetTypeAndTargetId(
                     user, ScrapTargetType.CURATION, curationId
             );
-            
+
             isScrapped = scrapRepository.existsByUserAndTargetTypeAndTargetId(
                     user, ScrapTargetType.CURATION, curationId
             );
@@ -358,7 +363,7 @@ public class CurationService {
     public CurationToggleResponseDto toggleCurationLike(Long curationId, User user) {
         Curation curation = curationRepository.findById(curationId)
                 .orElseThrow(() -> new EntityNotFoundException("큐레이션을 찾을 수 없습니다. ID: " + curationId));
-        
+
         Optional<Like> likeOptional = likeRepository.findByUserAndTargetTypeAndTargetId(
                 user, ScrapTargetType.CURATION, curationId
         );

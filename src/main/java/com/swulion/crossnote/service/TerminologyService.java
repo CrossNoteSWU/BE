@@ -1,7 +1,5 @@
 package com.swulion.crossnote.service;
 
-import com.swulion.crossnote.dto.Curation.AiGeneratedContentDto;
-import com.swulion.crossnote.entity.Curation.CurationLevel;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
@@ -101,28 +99,22 @@ public class TerminologyService {
         return new TermCountResult(found, density);
     }
 
-    // AiGeneratedContentDto에 Level 반영 (categoryId 기반으로 체크)
-    public AiGeneratedContentDto assignLevel(AiGeneratedContentDto dto, Long categoryId) {
-        if (dto == null) return null;
+    /**
+     * Step 2: 원문 텍스트의 전문 용어 농도를 계산하여 난이도를 객관적으로 분석합니다.
+     * @param sourceText 원문 텍스트 (Dbpia 등에서 확보한 원본 데이터)
+     * @param categoryId 해당 원문의 주제 분야 ID
+     * @return TermCountResult (용어 개수와 밀도)
+     */
+    public TermCountResult analyzeSourceText(String sourceText, Long categoryId) {
+        if (sourceText == null || sourceText.isBlank()) return new TermCountResult(0, 0);
 
-        String text = dto.getDescription();
-        TermCountResult result = countTermsInText(text, categoryId);
+        // 원본 텍스트에 대해 용어 개수를 세는 기존 로직을 재사용
+        TermCountResult result = countTermsInText(sourceText, categoryId);
 
-        dto.setTerminologyDensity(result.getDensity());
-        log.info("assignLevel: categoryId={}, termCount={}, density={}", categoryId, result.getCount(), result.getDensity());
+        // (선택 사항: 여기서는 레벨을 결정하지 않고 CurationService에서 결정하도록 함)
 
-        // 정책: 전문용어 2개 이상 OR density >= DENSITY_THRESHOLD => LEVEL_2
-        if (result.getCount() >= ABS_TERM_COUNT_THRESHOLD || result.getDensity() >= DENSITY_THRESHOLD) {
-            dto.setCurationLevel(CurationLevel.LEVEL_2);
-        } else {
-            dto.setCurationLevel(CurationLevel.LEVEL_1);
-        }
-        return dto;
-    }
-
-    // 오버로드: categoryId 모르는 경우(예: 전체 사전 사용)
-    public AiGeneratedContentDto assignLevel(AiGeneratedContentDto dto) {
-        return assignLevel(dto, null);
+        log.info("analyzeSourceText: categoryId={}, termCount={}, density={}", categoryId, result.getCount(), result.getDensity());
+        return result;
     }
 
     // helper DTO

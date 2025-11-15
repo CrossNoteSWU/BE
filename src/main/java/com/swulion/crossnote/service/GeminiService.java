@@ -23,8 +23,13 @@ public class GeminiService {
     private final ApiKeys apiKeys;
     private final ObjectMapper objectMapper;
 
-    private static final String GEMINI_API_URL =
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=";
+    // 2.0 모델 URL
+    private static final String GEMINI_2_0_API_URL =
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=";
+
+    // 2.5 모델 URL
+    // private static final String GEMINI_2_5_API_URL =
+    //        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=";
 
     public AiGeneratedContentDto generateContent(String originalText, CurationLevel targetLevel) {
 
@@ -38,7 +43,7 @@ public class GeminiService {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<GeminiRequestDto> entity = new HttpEntity<>(requestBody, headers);
-        String apiUrl = GEMINI_API_URL + apiKeys.getGemini();
+        String apiUrl = GEMINI_2_0_API_URL + apiKeys.getGemini(); // 2.0 모델 호출
 
         try {
             ResponseEntity<GeminiResponseDto> response = restTemplate.postForEntity(
@@ -52,7 +57,12 @@ public class GeminiService {
                 // 개행/비정상 문자 제거 (예방장치)
                 jsonText = jsonText.replace("\n", " ").replace("\r", " ");
 
-                AiJsonResponseDto aiJson = objectMapper.readValue(jsonText, AiJsonResponseDto.class);
+                // 2.0
+                AiJsonResponseDto[] aiJsonArray = objectMapper.readValue(jsonText, AiJsonResponseDto[].class);
+                AiJsonResponseDto aiJson = aiJsonArray[0]; // 첫 번째 항목 사용
+
+                // 2.5
+                //AiJsonResponseDto aiJson = objectMapper.readValue(jsonText, AiJsonResponseDto.class);
 
                 return new AiGeneratedContentDto(
                         aiJson.getTitle(),
