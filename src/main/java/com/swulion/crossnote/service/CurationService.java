@@ -1,6 +1,8 @@
 package com.swulion.crossnote.service;
 
-import com.swulion.crossnote.client.NaverNewsClient;
+import com.swulion.crossnote.client.CurationSourceClient;
+//import com.swulion.crossnote.client.KciClient;
+//import com.swulion.crossnote.client.NationalLibClient;
 import com.swulion.crossnote.dto.Curation.*;
 import com.swulion.crossnote.entity.Category;
 import com.swulion.crossnote.entity.Curation.Curation;
@@ -26,26 +28,28 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CurationService {
-    
+
     private final CategoryRepository categoryRepository;
     private final CurationRepository curationRepository;
     private final UserCategoryPreferenceRepository userPreferenceRepository;
     private final ScrapRepository scrapRepository;
     private final LikeRepository likeRepository;
 
-    private final NaverNewsClient naverNewsClient;
+    private final List<CurationSourceClient> allClients; // (Spring이 5개 Client Bean을 모두 주입)
     private final GeminiService geminiService;
     private final TerminologyService terminologyService;
-    // (YoutubeClient, DbpiaClient 등 추가 주입 필요)
+
+    //private final KciClient kciClient;
+    //private final NationalLibClient nationalLibClient;
+
+    private final Random random = new Random(); // (랜덤 선택용)
     
 //    @Scheduled(cron = "0 0 4 * * *") // 매일 새벽 4시 0분 0초
 //    @Transactional
@@ -64,86 +68,189 @@ public class CurationService {
 //        log.info("데일리 큐레이션 생성 작업 완료.");
 //    }
 
-    // 테스트용 - 네이버1, 유튜브1, 제미나이4, 총 6회만 호출하도록
+    // 테스트용
     @Transactional
     public void createDailyCurations() {
         log.info("데일리 큐레이션 생성 작업을 시작합니다...");
 
-        // 29개 세부 카테고리 목록 가져오기
         List<Category> categories = categoryRepository.findByParentCategoryIdIsNotNull();
 
-        // 테스트를 위해 1개만 실행
         if (categories.isEmpty()) {
             log.warn("테스트할 카테고리가 DB에 없습니다.");
             return;
         }
 
-        Category testCategory = categories.get(0); // 리스트의 첫 번째 카테고리 1개만 선택
+        Category testCategory = categories.get(0);
         log.warn("[TEST MODE] {} 카테고리 1개만 테스트 생성합니다.", testCategory.getCategoryName());
 
-        // for (Category category : categories) { // 기존 루프 주석 처리
-
-        // '인사이트' 타입 생성 (뉴스 기반)
-        createInsightCurationForCategory(testCategory); // 1개만 실행
-        // '크로스노트' 타입 생성 (논문 기반)
-        createCrossNoteCurationForCategory(testCategory); // 1개만 실행
-
-        // } ///️ 기존 루프 주석 처리
+        // '인사이트' 타입 생성
+        createInsightCurationForCategory(testCategory);
+        // '크로스노트' 타입 생성
+        createCrossNoteCurationForCategory(testCategory);
 
         log.info("데일리 큐레이션 생성 작업 완료.");
     }
 
+//    // 테스트용 - 제미나이x. KCI와 NationalLib만
+//    // --- 2. [수정] 메서드 내용을 KCI와 NationalLib 호출 테스트로 덮어씁니다. ---
+//    @Transactional
+//    public void createDailyCurations() {
+//        log.warn("[API CLIENT TEST MODE] KCI와 NationalLib 클라이언트 호출만 테스트합니다. (Gemini 호출 없음)");
+//
+//        String testQuery = "철학"; // 테스트할 검색어
+//
+//        // === KCI Client 테스트 ===
+//        try {
+//            log.info("[API TEST] KciClient.fetchSource('{}') 호출 시도...", testQuery);
+//            CurationSourceDto kciResult = kciClient.fetchSource(testQuery);
+//
+//            if (kciResult != null && kciResult.getOriginalText() != null) {
+//                log.info("[API TEST] KCI Client 성공! Title: {}", kciResult.getOriginalText().substring(0, Math.min(kciResult.getOriginalText().length(), 70)));
+//            } else {
+//                log.warn("[API TEST] KCI Client가 null을 반환했습니다. (로그 확인 필요)");
+//            }
+//        } catch (Exception e) {
+//            log.error("[API TEST] KCI Client 호출 중 예외 발생", e);
+//        }
+//
+//        // === NationalLib Client 테스트 ===
+//        try {
+//            log.info("[API TEST] NationalLibClient.fetchSource('{}') 호출 시도...", testQuery);
+//            CurationSourceDto nlResult = nationalLibClient.fetchSource(testQuery);
+//
+//            if (nlResult != null && nlResult.getOriginalText() != null) {
+//                log.info("[API TEST] NationalLib Client 성공! Title: {}", nlResult.getOriginalText().substring(0, Math.min(nlResult.getOriginalText().length(), 70)));
+//            } else {
+//                log.warn("[API TEST] NationalLib Client가 null을 반환했습니다. (로그 확인 필요)");
+//            }
+//        } catch (Exception e) {
+//            log.error("[API TEST] NationalLib Client 호출 중 예외 발생", e);
+//        }
+//
+//        log.warn("[API CLIENT TEST MODE] 테스트 완료.");
+//    }
+
+    /*
+     * '인사이트' 큐레이션 생성 (기능 명세서 2.2-1: 모든 소스 사용)
+     */
     private void createInsightCurationForCategory(Category category) {
-        // 뉴스 아이템 가져오기
-        NaverNewsResponseDto.Item newsItem = naverNewsClient.fetchNews(category.getCategoryName());
-        if (newsItem == null) {
-            log.warn("{} 카테고리의 뉴스를 찾을 수 없습니다.", category.getCategoryName());
+        if (allClients.isEmpty()) {
+            log.warn("CurationSourceClient 구현체가 없습니다.");
             return;
         }
 
-        String originalText = newsItem.getTitle() + " " + newsItem.getDescription();
-        String sourceUrl = newsItem.getLink();
+        // 1. 모든 클라이언트 중 1개 랜덤 선택
+        CurationSourceClient randomClient = allClients.get(random.nextInt(allClients.size()));
+        log.info("{} 카테고리 '인사이트' 생성 시도 (소스: {})", category.getCategoryName(), randomClient.getSourceType());
 
-        // AI 콘텐츠 생성
-        AiGeneratedContentDto contentA = geminiService.generateContent(originalText, CurationLevel.LEVEL_1);
-        AiGeneratedContentDto contentB = geminiService.generateContent(originalText, CurationLevel.LEVEL_2);
+        // 2. 선택된 클라이언트로부터 소스 가져오기
+        CurationSourceDto source = randomClient.fetchSource(category.getCategoryName());
+        if (source == null) {
+            log.warn("{} 카테고리에서 소스({})를 찾을 수 없습니다.", category.getCategoryName(), randomClient.getSourceType());
+            return;
+        }
 
-        // 전문 용어 농도 기반 Level 계산
+        // 3. (공통 로직) AI 생성 및 L1 저장
+        AiGeneratedContentDto contentA = geminiService.generateContent(source.getOriginalText(), CurationLevel.LEVEL_1);
         terminologyService.assignLevel(contentA);
-        terminologyService.assignLevel(contentB);
 
-        // LEVEL_1 큐레이션 저장
         Curation curationA = Curation.builder()
                 .category(category)
                 .curationType(CurationType.INSIGHT)
-                .sourceUrl(sourceUrl)
-                .imageUrl(null)
+                .sourceUrl(source.getSourceUrl())
+                .imageUrl(source.getImageUrl())
                 .title(contentA.getTitle())
                 .description(contentA.getDescription())
                 .curationLevel(contentA.getCurationLevel())
                 .build();
         curationRepository.save(curationA);
 
-        // LEVEL_2 큐레이션 저장
+        // 4. (공통 로직) L2 생성 및 저장
+        AiGeneratedContentDto contentB = geminiService.generateContent(source.getOriginalText(), CurationLevel.LEVEL_2);
+        terminologyService.assignLevel(contentB);
+
         Curation curationB = Curation.builder()
                 .category(category)
                 .curationType(CurationType.INSIGHT)
-                .sourceUrl(sourceUrl)
-                .imageUrl(null)
+                .sourceUrl(source.getSourceUrl())
+                .imageUrl(source.getImageUrl())
                 .title(contentB.getTitle())
                 .description(contentB.getDescription())
                 .curationLevel(contentB.getCurationLevel())
                 .build();
         curationRepository.save(curationB);
 
-        log.info("{} 카테고리 인사이트 큐레이션 (Level 1, 2) 생성 완료.", category.getCategoryName());
+        log.info("{} 카테고리 인사이트 큐레이션 (Level 1, 2) 생성 완료. (소스: {})", category.getCategoryName(), randomClient.getSourceType());
     }
 
+    /*
+     * '크로스노트' 큐레이션 생성 (기능 명세서 2.2-2: '공적문서' 제외)
+     */
     private void createCrossNoteCurationForCategory(Category category) {
-        // TODO: 크로스노트 로직 구현 (RestTemplate 사용)
-        log.info("{} 카테고리 크로스노트 큐레이션 (Level 1, 2) 생성 완료.", category.getCategoryName());
+
+        // 1. 크로스노트용 클라이언트 필터링 ('DOCUMENT' 타입 제외)
+        List<CurationSourceClient> crossNoteClients = allClients.stream()
+                .filter(client -> !"DOCUMENT".equals(client.getSourceType()))
+                .collect(Collectors.toList());
+
+        if (crossNoteClients.isEmpty()) {
+            log.warn("크로스노트용 CurationSourceClient 구현체가 없습니다.");
+            return;
+        }
+
+        // 2. 크로스노트 클라이언트 중 1개 랜덤 선택
+        CurationSourceClient randomClient = crossNoteClients.get(random.nextInt(crossNoteClients.size()));
+        log.info("{} 카테고리 '크로스노트' 생성 시도 (소스: {})", category.getCategoryName(), randomClient.getSourceType());
+
+        // 3. 소스 가져오기
+        CurationSourceDto source = randomClient.fetchSource(category.getCategoryName());
+        if (source == null) {
+            log.warn("{} 카테고리에서 소스({})를 찾을 수 없습니다.", category.getCategoryName(), randomClient.getSourceType());
+            return;
+        }
+
+        // 4. 크로스할 카테고리 찾기
+        Category crossCategory = findRandomCrossCategory(category);
+        if (crossCategory == null) {
+            log.warn("크로스할 카테고리를 찾을 수 없습니다. (원본: {})", category.getCategoryName());
+            return;
+        }
+
+        // 5. (공통 로직) AI 생성 및 L1 저장
+        AiGeneratedContentDto contentA = geminiService.generateContent(source.getOriginalText(), CurationLevel.LEVEL_1);
+        terminologyService.assignLevel(contentA);
+
+        Curation curationA = Curation.builder()
+                .category(category)
+                .crossCategory(crossCategory) // (크로스 카테고리 설정)
+                .curationType(CurationType.CROSSNOTE) // (타입: CROSSNOTE)
+                .sourceUrl(source.getSourceUrl())
+                .imageUrl(source.getImageUrl())
+                .title(contentA.getTitle())
+                .description(contentA.getDescription())
+                .curationLevel(contentA.getCurationLevel())
+                .build();
+        curationRepository.save(curationA);
+
+        // 6. (공통 로직) L2 생성 및 저장
+        AiGeneratedContentDto contentB = geminiService.generateContent(source.getOriginalText(), CurationLevel.LEVEL_2);
+        terminologyService.assignLevel(contentB);
+
+        Curation curationB = Curation.builder()
+                .category(category)
+                .crossCategory(crossCategory)
+                .curationType(CurationType.CROSSNOTE)
+                .sourceUrl(source.getSourceUrl())
+                .imageUrl(source.getImageUrl())
+                .title(contentB.getTitle())
+                .description(contentB.getDescription())
+                .curationLevel(contentB.getCurationLevel())
+                .build();
+        curationRepository.save(curationB);
+
+        log.info("{} x {} 카테고리 크로스노트 큐레이션 (Level 1, 2) 생성 완료. (소스: {})", category.getCategoryName(), crossCategory.getCategoryName(), randomClient.getSourceType());
     }
-    
+
     // 2.1. 개인화 피드 로직
     @Transactional(readOnly = true)
     public List<CurationFeedDto> getPersonalizedFeed(User user) {
@@ -176,6 +283,24 @@ public class CurationService {
                 .limit(6)
                 .map(CurationFeedDto::new) // DTO로 변환
                 .collect(Collectors.toList());
+    }
+
+    /*
+     * 크로스할 카테고리를 찾는 헬퍼 메서드
+     */
+    private Category findRandomCrossCategory(Category originalCategory) {
+        // (DB 호출 최소화를 위해 모든 카테고리를 메모리에 캐싱하는 것도 고려해볼 수 있습니다)
+        List<Category> allCategories = categoryRepository.findByParentCategoryIdIsNotNull();
+
+        // 원본 카테고리 제외
+        allCategories.removeIf(c -> c.getCategoryId().equals(originalCategory.getCategoryId()));
+
+        if (allCategories.isEmpty()) {
+            return null; // (카테고리가 1개뿐일 경우)
+        }
+
+        Collections.shuffle(allCategories);
+        return allCategories.get(0);
     }
 
     // 우선순위 정렬을 위한 헬퍼 메서드
