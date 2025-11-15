@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -76,7 +77,6 @@ public class CurationService {
 //    }
 
     // 현실적인 대안 - 4번에 걸쳐서 큐레이션 생성하기 (API 호출량 제한 이유)
-    //
     @Transactional
     public void createDailyCurations() {
         log.info("데일리 큐레이션 생성 작업 시작 (분산 배치 실행)");
@@ -89,13 +89,14 @@ public class CurationService {
             return;
         }
 
-        // 2. 분할 계산: 29개 카테고리를 4개의 배치로 나눕니다.
+        // 2. 분할 계산: 29개 카테고리를 4개의 배치로 나눔
         final int BATCH_COUNT = 4;
-        // 29 / 4 = 7.25 이므로 한 배치당 최대 8개 카테고리를 처리합니다.
+        // 29 / 4 = 7.25 이므로 한 배치당 최대 8개 카테고리를 처리
         final int CATEGORIES_PER_BATCH = (int) Math.ceil((double) allCategories.size() / BATCH_COUNT); // 8
 
+        /* 기록 */
         // 3. 현재 실행할 배치 번호 설정 (수동 조정 필요: 1, 2, 3, 4)
-        //    실제 스케줄러에서는 이 값을 DB나 캐시에서 관리하며, 다음 실행 시 +1 되어야 합니다.
+        //    실제 스케줄러에서는 이 값을 DB나 캐시에서 관리하며, 다음 실행 시 +1 되어야 함
         int currentBatchIndex = 1; // 현재 첫 번째 배치 (1)만 실행. (11/15 오후 3시 30분)
 
         int startIndex = (currentBatchIndex - 1) * CATEGORIES_PER_BATCH; // 0
@@ -124,20 +125,19 @@ public class CurationService {
     }
 
 //    // 테스트용 - 제미나이x. KCI와 NationalLib만
-//    // --- 2. [수정] 메서드 내용을 KCI와 NationalLib 호출 테스트로 덮어씁니다. ---
 //    @Transactional
 //    public void createDailyCurations() {
-//        log.warn("[API CLIENT TEST MODE] KCI와 NationalLib 클라이언트 호출만 테스트합니다. (Gemini 호출 없음)");
+//        log.warn("[API CLIENT TEST MODE]
 //
 //        String testQuery = "철학"; // 테스트할 검색어
 //
-//        // === KCI Client 테스트 ===
+//        // KCI Client 테스트
 //        try {
 //            log.info("[API TEST] KciClient.fetchSource('{}') 호출 시도...", testQuery);
 //            CurationSourceDto kciResult = kciClient.fetchSource(testQuery);
 //
 //            if (kciResult != null && kciResult.getOriginalText() != null) {
-//                log.info("[API TEST] KCI Client 성공! Title: {}", kciResult.getOriginalText().substring(0, Math.min(kciResult.getOriginalText().length(), 70)));
+//                log.info("[API TEST] KCI Client 성공!! Title: {}", kciResult.getOriginalText().substring(0, Math.min(kciResult.getOriginalText().length(), 70)));
 //            } else {
 //                log.warn("[API TEST] KCI Client가 null을 반환했습니다. (로그 확인 필요)");
 //            }
@@ -145,7 +145,7 @@ public class CurationService {
 //            log.error("[API TEST] KCI Client 호출 중 예외 발생", e);
 //        }
 //
-//        // === NationalLib Client 테스트 ===
+//        // NationalLib Client 테스트
 //        try {
 //            log.info("[API TEST] NationalLibClient.fetchSource('{}') 호출 시도...", testQuery);
 //            CurationSourceDto nlResult = nationalLibClient.fetchSource(testQuery);
@@ -162,13 +162,11 @@ public class CurationService {
 //        log.warn("[API CLIENT TEST MODE] 테스트 완료.");
 //    }
 
-    /*
-     * '인사이트' 큐레이션 생성 (기능 명세서 2.2-1: 모든 소스 사용)
-     */
+    // '인사이트' 큐레이션 생성
     private void createInsightCuration(Category category, CurationLevel level) {
         if (allClients.isEmpty()) return;
 
-        // ⭐ 2번 항목 해결: fetchSourceWithRetry를 사용하여 소스 확보 로직 대체
+        // fetchSourceWithRetry를 사용하여 소스 확보 로직 대체
         CurationSourceDto source = fetchSourceWithRetry(category.getCategoryName(), allClients);
         if (source == null) return; // 모든 시도 실패 시 생성 중단
 
@@ -177,10 +175,10 @@ public class CurationService {
         TerminologyService.TermCountResult analysisResult =
                 terminologyService.analyzeSourceText(source.getOriginalText(), categoryIds); // List<Long> 전달
 
-        // ⭐ Step 2: 난이도 분석 결과에 따라 최종 Level 동적 결정
+        // 난이도 분석 결과에 따라 최종 Level 동적 결정
         CurationLevel finalLevel = determineFinalLevel(analysisResult);
 
-        // ⭐ Step 3: 최종 Level에 맞춰 AI에게 제목/요약 요청
+        // 최종 Level에 맞춰 AI에게 제목/요약 요청
         AiGeneratedContentDto content = geminiService.generateContent(source.getOriginalText(), finalLevel);
         Curation curation = Curation.builder()
                 .category(category)
@@ -195,31 +193,29 @@ public class CurationService {
         curationRepository.save(curation);
     }
 
-    /*
-     * '크로스노트' 큐레이션 생성 (기능 명세서 2.2-2: '공적문서' 제외)
-     */
+    // '크로스노트' 큐레이션 생성
     private void createCrossNoteCuration(Category category, CurationLevel level) {
         List<CurationSourceClient> crossNoteClients = allClients.stream()
                 .filter(client -> !"DOCUMENT".equals(client.getSourceType()))
                 .collect(Collectors.toList());
         if (crossNoteClients.isEmpty()) return;
 
-        // ⭐ 2번 항목 해결: fetchSourceWithRetry를 사용하여 소스 확보 로직 대체
+        // fetchSourceWithRetry를 사용하여 소스 확보 로직 대체
         CurationSourceDto source = fetchSourceWithRetry(category.getCategoryName(), crossNoteClients);
         if (source == null) return; // 모든 시도 실패 시 생성 중단
 
         Category crossCategory = findRandomCrossCategory(category);
         if (crossCategory == null) return;
 
-        // Step 2: CrossNote 개선 로직 적용 (메인 + 교차 카테고리 모두 사용하여 분석)
+        // CrossNote 개선 로직 적용 (메인 + 교차 카테고리 모두 사용하여 분석)
         List<Long> categoryIds = List.of(category.getCategoryId(), crossCategory.getCategoryId());
         TerminologyService.TermCountResult analysisResult =
                 terminologyService.analyzeSourceText(source.getOriginalText(), categoryIds);
 
-        // ⭐ Step 2: 난이도 분석 결과에 따라 최종 Level 동적 결정
+        // 난이도 분석 결과에 따라 최종 Level 동적 결정
         CurationLevel finalLevel = determineFinalLevel(analysisResult);
 
-        // ⭐ Step 3: 최종 Level에 맞춰 AI에게 제목/요약 요청
+        // 최종 Level에 맞춰 AI에게 제목/요약 요청
         AiGeneratedContentDto content = geminiService.generateContent(source.getOriginalText(), finalLevel);
         Curation curation = Curation.builder()
                 .category(category)
@@ -244,16 +240,19 @@ public class CurationService {
                 .map(pref -> pref.getCategory().getCategoryId())
                 .collect(Collectors.toList());
 
-        // 2. 사용자의 레벨 조회 (User 엔티티에 getCurationLevel()이 있어야 함)
+        // 2. 사용자의 레벨 조회
         CurationLevel userLevel = user.getCurationLevel(); //
 
         // 3. 오늘 0시 0분
-        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+        ZoneId zoneId = ZoneId.of("UTC");
+        LocalDateTime startOfToday = LocalDate.now(zoneId).atStartOfDay();
 
         // 4. 사용자의 선호 분야/레벨에 맞는 '오늘 생성된' 큐레이션 조회
         List<Curation> candidates = curationRepository
                 .findByCategory_CategoryIdInAndCurationLevelAndCreatedAtAfter(
-                        preferenceCategoryIds, userLevel, startOfToday
+                        preferenceCategoryIds,
+                        userLevel,
+                        startOfToday
                 );
 
         // 5. 유형별로 분리하고, 우선순위 2 (최신성) 기준으로 정렬 (재할당 로직을 위한 준비)
@@ -309,9 +308,6 @@ public class CurationService {
                 finalMix.add(remainingIN.get(i));
                 needed--;
             }
-
-            // 3. (옵션) BC 잔여분 사용 - 문서에는 명확히 언급 없으나, 콘텐츠 부족 시 채우는 역할
-            // if (needed > 0) { ... }
         }
 
         // 7. 최종 믹스에 대해 우선순위 1 & 2 정렬 (혹시 재할당된 콘텐츠 순서가 꼬였을 경우 대비)
@@ -327,9 +323,7 @@ public class CurationService {
                 .collect(Collectors.toList());
     }
 
-    /*
-     * 크로스할 카테고리를 찾는 헬퍼 메서드
-     */
+    // 크로스할 카테고리를 찾는 헬퍼 메서드
     private Category findRandomCrossCategory(Category originalCategory) {
         // (DB 호출 최소화를 위해 모든 카테고리를 메모리에 캐싱하는 것도 고려해볼 수 있습니다)
         List<Category> allCategories = categoryRepository.findByParentCategoryIdIsNotNull();
@@ -380,7 +374,7 @@ public class CurationService {
     }
 
     // TerminologyService의 임계값을 사용하거나 여기에 정의
-    private static final double DENSITY_THRESHOLD = 0.03;
+    private static final double DENSITY_THRESHOLD = 0.02;
     private static final int ABS_TERM_COUNT_THRESHOLD = 2;
 
     // Level 결정 헬퍼 메서드 추가

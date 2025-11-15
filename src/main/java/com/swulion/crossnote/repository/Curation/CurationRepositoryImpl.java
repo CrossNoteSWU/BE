@@ -1,7 +1,5 @@
 package com.swulion.crossnote.repository.Curation;
 
-// 1. (오류 수정) com.querydsl.core.QueryFactory 임포트 제거
-// import com.querydsl.core.QueryFactory;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;

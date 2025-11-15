@@ -3,9 +3,7 @@ package com.swulion.crossnote.dto.Curation;
 import lombok.Builder;
 import lombok.Getter;
 
-/**
- * 모든 API 클라이언트가 CurationService에 반환할 표준 DTO
- */
+// 모든 API 클라이언트가 CurationService에 반환할 표준 DTO
 @Getter
 @Builder
 public class CurationSourceDto {

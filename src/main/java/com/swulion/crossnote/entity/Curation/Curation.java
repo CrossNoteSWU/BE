@@ -1,6 +1,8 @@
 package com.swulion.crossnote.entity.Curation;
 
 import com.swulion.crossnote.entity.Category;
+import com.swulion.crossnote.entity.ColumnEntity;
+import com.swulion.crossnote.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,6 +10,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
@@ -61,6 +64,14 @@ public class Curation {
     @Column(nullable = false)
     private double terminologyDensity;
 
+    // 원본 칼럼 작성자 ID
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_user_id", nullable = false)
+    private User author;
+
+    // 원본 칼럼 ID (베스트 칼럼 중복 방지 및 원본 이동용)
+    private Long originalColumnId;
+
     public void incrementLikeCount() {
         this.likeCount++;
     }
@@ -77,6 +88,23 @@ public class Curation {
         if(this.scrapCount > 0){
             this.scrapCount--;
         }
+    }
+
+    public static Curation fromColumn(ColumnEntity column, Category mainCategory, Category crossCategory) {
+        return Curation.builder()
+                .category(mainCategory)
+                .crossCategory(crossCategory)
+                .author(column.getColumnAutherId()) // 원본 작성자
+                // 베스트 칼럼은 원문 URL이 없으므로, title과 content만 복사
+                .sourceUrl(null)
+                .imageUrl(column.getImageUrl())
+                .title(column.getTitle())
+                .description(column.getContent() != null ? column.getContent().substring(0, Math.min(column.getContent().length(), 300)) : "")
+                .curationLevel(CurationLevel.LEVEL_1)
+                .terminologyDensity(0.0) // 칼럼은 분석 안 함
+                .likeCount(0L)
+                .scrapCount(0L)
+                .build();
     }
 
     @PrePersist

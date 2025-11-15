@@ -17,6 +17,9 @@ public class CurationFeedDto {
     private String categoryName;
     private String crossCategoryName; // 크로스노트일 경우
 
+    // 베스트 칼럼 여부
+    private boolean isBestColumn;
+
     public CurationFeedDto(Curation curation) {
         this.curationId = curation.getId();
         this.title = curation.getTitle();
@@ -32,5 +35,8 @@ public class CurationFeedDto {
         if(curation.getCrossCategory() != null){
             this.crossCategoryName = curation.getCrossCategory().getCategoryName();
         }
+
+        // CurationType이 베스트칼럼인지 확인
+        this.isBestColumn = curation.getCurationType() == CurationType.BEST_COLUMN;
     }
 }

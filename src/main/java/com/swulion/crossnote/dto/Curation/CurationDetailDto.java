@@ -24,6 +24,10 @@ public class CurationDetailDto {
     private boolean isLiked;
     private boolean isScrapped;
 
+    // 베스트 칼럼 추가
+    private Long originalColumnId;
+    private boolean isBestColumn;
+
     public CurationDetailDto(Curation curation, boolean isLiked, boolean isScrapped) {
         this.curationId = curation.getId();
         this.title = curation.getTitle();
@@ -44,5 +48,8 @@ public class CurationDetailDto {
         this.scrapCount = curation.getScrapCount();
         this.isLiked = isLiked;
         this.isScrapped = isScrapped;
+
+        this.isBestColumn = curation.getCurationType() == CurationType.BEST_COLUMN;
+        this.originalColumnId = curation.getOriginalColumnId();
     }
 }

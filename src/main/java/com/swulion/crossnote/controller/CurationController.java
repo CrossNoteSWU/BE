@@ -4,6 +4,7 @@ import com.swulion.crossnote.dto.Curation.CurationDetailDto;
 import com.swulion.crossnote.dto.Curation.CurationFeedDto;
 import com.swulion.crossnote.dto.Curation.CurationToggleResponseDto;
 import com.swulion.crossnote.entity.User;
+import com.swulion.crossnote.service.BestColumnCurationService;
 import com.swulion.crossnote.service.CurationService;
 import com.swulion.crossnote.service.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import java.util.List;
 public class CurationController {
 
     private final CurationService curationService;
+    private final BestColumnCurationService bestColumnCurationService;
 
     /*
      개인화 큐레이션 피드 조회 (홈) API
@@ -113,6 +115,24 @@ public class CurationController {
             log.error("=== [TEST] 수동 큐레이션 생성 중 오류 발생 ===", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("배치 작업 실패: " + e.getMessage());
+        }
+    }
+
+    /* [테스트용] 베스트 칼럼 선정 로직을 수동으로 실행하는 API 추가
+     * [POST] /curation/test/run-best-column
+     */
+    @PostMapping("/test/run-best-column")
+    public ResponseEntity<String> runBestColumnCurator() {
+        log.warn("=== [TEST] 베스트 칼럼 선정 작업을 시작합니다. ===");
+        try {
+            bestColumnCurationService.curateBestColumns();
+            log.warn("=== [TEST] 베스트 칼럼 선정 작업 완료. ===");
+            return ResponseEntity.ok("수동 베스트 칼럼 선정 작업 완료.");
+
+        } catch (Exception e) {
+            log.error("=== [TEST] 베스트 칼럼 선정 중 오류 발생 ===", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("베스트 칼럼 선정 작업 실패: " + e.getMessage());
         }
     }
 }

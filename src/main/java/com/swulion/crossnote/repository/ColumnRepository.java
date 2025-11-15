@@ -18,4 +18,7 @@ public interface ColumnRepository extends JpaRepository<ColumnEntity, Long> {
 
     //댓글많은 순
     List<ColumnEntity> findAllByOrderByCommentCountDesc();
+
+    // 베스트 칼럼 선정 기준
+    List<ColumnEntity> findByLikeCountGreaterThanEqualAndScrapCountGreaterThanEqual(int minLikeCount, int minScrapCount);
 }
