@@ -8,7 +8,7 @@ import java.util.Map;
 
 @Getter
 @NoArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true) // (필요 없는 필드는 무시)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class YoutubeResponseDto {
 
     private List<Item> items;

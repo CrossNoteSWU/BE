@@ -81,7 +81,7 @@ public class CurationService {
     public void createDailyCurations() {
         log.info("데일리 큐레이션 생성 작업 시작 (분산 배치 실행)");
 
-        // 1. 모든 하위 카테고리 (29개)를 조회합니다.
+        // 1. 모든 하위 카테고리 (29개)를 조회
         List<Category> allCategories = categoryRepository.findByParentCategoryIdIsNotNull();
 
         if (allCategories.isEmpty()) {
@@ -255,7 +255,7 @@ public class CurationService {
                         startOfToday
                 );
 
-        // 5. 유형별로 분리하고, 우선순위 2 (최신성) 기준으로 정렬 (재할당 로직을 위한 준비)
+        // 5. 유형별로 분리하고, 우선순위 2 기준으로 정렬 (재할당 로직을 위한 준비)
         Map<CurationType, List<Curation>> groupedCandidates = candidates.stream()
                 .sorted(Comparator.comparing(Curation::getCreatedAt).reversed())
                 .collect(Collectors.groupingBy(

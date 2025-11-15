@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Slf4j
-@Service("dbpiaClient") // (고유한 Bean 이름 설정)
+@Service("dbpiaClient")
 @RequiredArgsConstructor
 public class DbpiaClient implements CurationSourceClient {
 
@@ -30,7 +30,6 @@ public class DbpiaClient implements CurationSourceClient {
     private final ApiKeys apiKeys;
     private final ObjectMapper objectMapper;
 
-    // 1. 실제 명세서의 URL
     private static final String DBPIA_API_URL = "https://api.dbpia.co.kr/v2/search/search.json";
 
     @Override
@@ -56,30 +55,28 @@ public class DbpiaClient implements CurationSourceClient {
             log.info("[DbpiaClient] 응답 수신. Status: {}, Content-Type: {}, Body is null: {}",
                     statusCode.value(), contentType, (responseBody == null));
 
-            // (디버깅 완료 후 이 로그는 주석 처리하거나 지워도 됩니다)
             log.info("[DbpiaClient] RAW JSON Response Body: {}", responseBody);
 
             if (statusCode.equals(HttpStatus.OK) && responseBody != null) {
                 if (contentType != null && contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {
 
-                    // --- [핵심 수정] ---
-                    // 1. JSON (String)을 List<DbpiaResponseDto>로 파싱합니다.
+                    // JSON (String)을 List<DbpiaResponseDto>로 파싱
                     List<DbpiaResponseDto> responseList = objectMapper.readValue(
                             responseBody,
                             new TypeReference<List<DbpiaResponseDto>>() {}
                     );
 
-                    // 2. 파싱 성공 및 데이터 유효성 검사
+                    // 파싱 성공 및 데이터 유효성 검사
                     if (responseList != null && !responseList.isEmpty() &&
                             responseList.get(0).getResult() != null &&
                             responseList.get(0).getResult().getItems() != null &&
                             !responseList.get(0).getResult().getItems().isEmpty())
                     {
-                        // 3. DTO 구조를 따라 올바른 Item 객체를 가져옵니다.
+                        // DTO 구조를 따라 올바른 Item 객체를 가져옴
                         DbpiaResponseDto.Item item = responseList.get(0).getResult().getItems().get(0);
                         String originalText = item.getTitle();
 
-                        // 4. (중요) title이 null이 아니고, HTML 태그를 제거합니다.
+                        // title이 null이 아니고, HTML 태그를 제거
                         if (originalText != null && !originalText.isBlank()) {
 
                             originalText = originalText.replaceAll("<!HS>", "").replaceAll("<!HE>", "");

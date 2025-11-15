@@ -19,13 +19,13 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
-public class CurationRepositoryImpl implements CurationRepositoryCustom{
+public class CurationRepositoryImpl implements CurationRepositoryCustom {
 
     private final JPAQueryFactory jpaQueryFactory;
     private final QCuration curation = QCuration.curation;
 
     @Override
-    public Page<Curation> findDynamicFeed(Long categoryId, String curationTypeStr, String query, LocalDateTime thirtyDaysAgo, Pageable pageable){
+    public Page<Curation> findDynamicFeed(Long categoryId, String curationTypeStr, String query, LocalDateTime thirtyDaysAgo, Pageable pageable) {
         List<Curation> content = jpaQueryFactory
                 .selectFrom(curation)
                 .where(
@@ -54,7 +54,7 @@ public class CurationRepositoryImpl implements CurationRepositoryCustom{
     }
 
     // 분야 필터 (categoryId)
-    private BooleanExpression categoryIdEq(Long categoryId){
+    private BooleanExpression categoryIdEq(Long categoryId) {
         return categoryId != null ? curation.category.categoryId.eq(categoryId) : null;
     }
 
@@ -72,8 +72,8 @@ public class CurationRepositoryImpl implements CurationRepositoryCustom{
     }
 
     // 검색어 필터 (제목 or 내용)
-    private BooleanExpression queryContains(String query){
-        if(StringUtils.hasText(query)){
+    private BooleanExpression queryContains(String query) {
+        if (StringUtils.hasText(query)) {
             return curation.title.containsIgnoreCase(query)
                     .or(curation.description.containsIgnoreCase(query));
         }
@@ -81,19 +81,25 @@ public class CurationRepositoryImpl implements CurationRepositoryCustom{
     }
 
     // 정렬
-    private OrderSpecifier<?> getOrderSpecifier(Sort sort){
-        if(sort.isEmpty()){
+    private OrderSpecifier<?> getOrderSpecifier(Sort sort) {
+        if (sort.isEmpty()) {
             return curation.createdAt.desc();
         }
 
-        for(Sort.Order order : sort){
+        for (Sort.Order order : sort) {
             String property = order.getProperty();
-            if(property.equals("createdAt")){
+
+            // 최신순 정렬 (createdAt)
+            if (property.equals("createdAt")) {
                 return order.isAscending() ? curation.createdAt.asc() : curation.createdAt.desc();
             }
-//          // 인기순 정렬 (추후 구현)
-//          if(property.equals("popularity"))
+            // 인기순 정렬 (likeCount 기준)
+            if (property.equals("likeCount") || property.equals("popularity")) {
+                return order.isAscending() ? curation.likeCount.asc() : curation.likeCount.desc();
+            }
         }
+
+        // 요청된 정렬 속성이 위 조건에 해당하지 않으면 기본값 (최신순) 반환
         return curation.createdAt.desc();
     }
 }

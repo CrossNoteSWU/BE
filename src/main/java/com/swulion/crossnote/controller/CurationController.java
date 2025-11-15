@@ -99,8 +99,8 @@ public class CurationController {
     }
 
     /*
-     * [테스트용] 큐레이션 생성 스케줄러를 수동으로 실행
-     * [POST] /curation/test/run-batch
+     [테스트용] 큐레이션 생성 스케줄러를 수동으로 실행
+     [POST] /curation/test/run-batch
      */
     @PostMapping("/test/run-batch")
     public ResponseEntity<String> runDailyCurationBatch() {
@@ -118,8 +118,9 @@ public class CurationController {
         }
     }
 
-    /* [테스트용] 베스트 칼럼 선정 로직을 수동으로 실행하는 API 추가
-     * [POST] /curation/test/run-best-column
+    /*
+     [테스트용] 베스트 칼럼 선정 로직을 수동으로 실행하는 API 추가
+     [POST] /curation/test/run-best-column
      */
     @PostMapping("/test/run-best-column")
     public ResponseEntity<String> runBestColumnCurator() {

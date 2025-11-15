@@ -52,7 +52,7 @@ public class NaverNewsClient implements CurationSourceClient { // CurationSource
         return "NEWS";
     }
 
-    /**
+    /*
      * Naver News API를 직접 호출하여 뉴스 항목을 가져오는 핵심 메서드
      */
     public NaverNewsResponseDto.Item fetchNews(String query) {
@@ -104,7 +104,7 @@ public class NaverNewsClient implements CurationSourceClient { // CurationSource
         }
     }
 
-    /**
+    /*
      * Naver API 응답에서 HTML 태그(<b>, </b>)를 제거하는 헬퍼 메서드
      */
     private String cleanHtml(String html) {
