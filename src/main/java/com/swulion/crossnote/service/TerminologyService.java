@@ -2,62 +2,138 @@ package com.swulion.crossnote.service;
 
 import com.swulion.crossnote.dto.Curation.AiGeneratedContentDto;
 import com.swulion.crossnote.entity.Curation.CurationLevel;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class TerminologyService {
 
-    // 전문 용어 사전
-    private static final Set<String> TECH_TERMS = new HashSet<>(Arrays.asList(
-            "알고리즘", "데이터베이스", "인공지능", "머신러닝", "딥러닝",
-            "클라우드", "블록체인", "유전체", "양자", "통계학"
-    ));
+    // categoryId -> set of terms (Long key)
+    private final Map<Long, Set<String>> termDictByCategory = new HashMap<>();
 
-    /*
-     * 텍스트 내 전문 용어 농도를 계산
-     * @param text AI가 생성한 텍스트
-     * @return 0.0 ~ 1.0
-     */
-    public double calculateTerminologyDensity(String text) {
-        if (text == null || text.isBlank()) return 0.0;
+    // 임계값: 용어 개수 기준 또는 비율(둘 중 하나 만족하면 LEVEL_2)
+    private static final double DENSITY_THRESHOLD = 0.03; // 3%
+    private static final int ABS_TERM_COUNT_THRESHOLD = 2; // 전문용어 최소 2개 이상 등장 시 LEVEL_2
 
-        String[] words = text.split("\\s+");
-        long termCount = Arrays.stream(words)
-                .filter(TECH_TERMS::contains)
-                .count();
-
-        return (double) termCount / words.length;
-    }
-
-    /*
-     * 전문 용어 농도 기반 Level 결정
-     * @param text AI가 생성한 텍스트
-     * @return LEVEL_1(기초) 또는 LEVEL_2(심화)
-     */
-    public CurationLevel determineCurationLevel(String text) {
-        double density = calculateTerminologyDensity(text);
-        log.info("전문 용어 농도: {}", density);
-
-        // 예시 기준: 0.05 이상이면 LEVEL_2, 아니면 LEVEL_1
-        if (density >= 0.05) {
-            return CurationLevel.LEVEL_2;
-        } else {
-            return CurationLevel.LEVEL_1;
+    @PostConstruct
+    public void init() {
+        try {
+            loadDictionariesFromResources();
+            log.info("Terminology dictionaries loaded for {} categories", termDictByCategory.size());
+        } catch (Exception e) {
+            log.error("Failed to load terminology dictionaries", e);
         }
     }
 
-    /*
-     * AiGeneratedContentDto에 Level 반영
+    private void loadDictionariesFromResources() throws Exception {
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        Resource[] resources = resolver.getResources("classpath:terminology/*.txt");
+
+        for (Resource res : resources) {
+            String filename = Objects.requireNonNull(res.getFilename()); // e.g. "7_philosophy.txt.txt"
+            // parse id from filename
+            String idStr = filename.split("_")[0];
+            long categoryId;
+            try {
+                categoryId = Long.parseLong(idStr);
+            } catch (NumberFormatException ex) {
+                log.warn("Skipping terms file with unexpected name: {}", filename);
+                continue;
+            }
+
+            Set<String> terms = new HashSet<>();
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(res.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String normalized = normalizeTerm(line);
+                    if (!normalized.isEmpty()) terms.add(normalized);
+                }
+            }
+            termDictByCategory.put(categoryId, terms);
+            log.info("Loaded {} terms for categoryId={} (file={})", terms.size(), categoryId, filename);
+        }
+    }
+
+    // 단순 정규화: 공백/구두점 제거 + toLowerCase
+    private String normalizeTerm(String t) {
+        if (t == null) return "";
+        return t.trim().replaceAll("[\\p{Punct}\\p{IsSpace}]+", "").toLowerCase();
+    }
+
+    /**
+     * 텍스트 내 전문 용어 개수를 센다. (substring 매칭 방식)
+     * - categoryId가 null이면 모든 카테고리(모든 용어)로 체크 가능
      */
-    public AiGeneratedContentDto assignLevel(AiGeneratedContentDto contentDto) {
-        CurationLevel level = determineCurationLevel(contentDto.getDescription());
-        contentDto.setCurationLevel(level);
-        return contentDto;
+    public TermCountResult countTermsInText(String text, Long categoryId) {
+        if (text == null || text.isBlank()) return new TermCountResult(0, 0);
+
+        String normalizedText = text.toLowerCase();
+        // 간단 방어: Q&A 등 텍스트 길이
+        String[] tokens = normalizedText.split("\\s+");
+        int tokenCount = Math.max(tokens.length, 1);
+
+        Set<String> termsToCheck;
+        if (categoryId == null) {
+            termsToCheck = termDictByCategory.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
+        } else {
+            termsToCheck = termDictByCategory.getOrDefault(categoryId, Collections.emptySet());
+        }
+
+        int found = 0;
+        for (String term : termsToCheck) {
+            if (term.isEmpty()) continue;
+            if (normalizedText.contains(term)) {
+                found++;
+            }
+        }
+
+        double density = (double) found / tokenCount;
+        return new TermCountResult(found, density);
+    }
+
+    // AiGeneratedContentDto에 Level 반영 (categoryId 기반으로 체크)
+    public AiGeneratedContentDto assignLevel(AiGeneratedContentDto dto, Long categoryId) {
+        if (dto == null) return null;
+
+        String text = dto.getDescription();
+        TermCountResult result = countTermsInText(text, categoryId);
+
+        dto.setTerminologyDensity(result.getDensity());
+        log.info("assignLevel: categoryId={}, termCount={}, density={}", categoryId, result.getCount(), result.getDensity());
+
+        // 정책: 전문용어 2개 이상 OR density >= DENSITY_THRESHOLD => LEVEL_2
+        if (result.getCount() >= ABS_TERM_COUNT_THRESHOLD || result.getDensity() >= DENSITY_THRESHOLD) {
+            dto.setCurationLevel(CurationLevel.LEVEL_2);
+        } else {
+            dto.setCurationLevel(CurationLevel.LEVEL_1);
+        }
+        return dto;
+    }
+
+    // 오버로드: categoryId 모르는 경우(예: 전체 사전 사용)
+    public AiGeneratedContentDto assignLevel(AiGeneratedContentDto dto) {
+        return assignLevel(dto, null);
+    }
+
+    // helper DTO
+    public static class TermCountResult {
+        private final int count;
+        private final double density;
+        public TermCountResult(int count, double density) {
+            this.count = count;
+            this.density = density;
+        }
+        public int getCount() { return count; }
+        public double getDensity() { return density; }
     }
 }

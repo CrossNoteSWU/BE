@@ -152,7 +152,7 @@ public class CurationService {
 
         // 3. (공통 로직) AI 생성 및 L1 저장
         AiGeneratedContentDto contentA = geminiService.generateContent(source.getOriginalText(), CurationLevel.LEVEL_1);
-        terminologyService.assignLevel(contentA);
+        terminologyService.assignLevel(contentA, category.getCategoryId());
 
         Curation curationA = Curation.builder()
                 .category(category)
@@ -167,7 +167,7 @@ public class CurationService {
 
         // 4. (공통 로직) L2 생성 및 저장
         AiGeneratedContentDto contentB = geminiService.generateContent(source.getOriginalText(), CurationLevel.LEVEL_2);
-        terminologyService.assignLevel(contentB);
+        terminologyService.assignLevel(contentB, category.getCategoryId());
 
         Curation curationB = Curation.builder()
                 .category(category)
