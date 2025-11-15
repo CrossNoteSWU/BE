@@ -98,7 +98,6 @@ public class CurationController {
 
     /*
      * [테스트용] 큐레이션 생성 스케줄러를 수동으로 실행
-     * (주의: 실제 Naver/Gemini API를 호출)
      * [POST] /curation/test/run-batch
      */
     @PostMapping("/test/run-batch")

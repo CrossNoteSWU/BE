@@ -65,7 +65,7 @@ public class Curation {
         this.likeCount++;
     }
     public void decrementLikeCount() {
-        if(this.likeCount == 0){
+        if(this.likeCount > 0){
             this.likeCount--;
         }
     }
@@ -74,7 +74,7 @@ public class Curation {
         this.scrapCount++;
     }
     public void decrementScrapCount() {
-        if(this.scrapCount == 0){
+        if(this.scrapCount > 0){
             this.scrapCount--;
         }
     }

@@ -11,5 +11,7 @@ import lombok.Getter;
 public class CurationSourceDto {
     private String originalText; // 원본 텍스트 (Gemini가 요약할 재료)
     private String sourceUrl;    // 원본 링크 (사용자가 클릭할 URL)
-    private String imageUrl;     // 썸네일 이미지 URL (선택)
+    private String imageUrl;     // 썸네일 이미지 URL
+
+    private String title;
 }

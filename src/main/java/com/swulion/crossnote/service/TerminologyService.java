@@ -20,7 +20,7 @@ public class TerminologyService {
     private final Map<Long, Set<String>> termDictByCategory = new HashMap<>();
 
     // 임계값: 용어 개수 기준 또는 비율(둘 중 하나 만족하면 LEVEL_2)
-    private static final double DENSITY_THRESHOLD = 0.03; // 3%
+    private static final double DENSITY_THRESHOLD = 0.02; // 2%
     private static final int ABS_TERM_COUNT_THRESHOLD = 2; // 전문용어 최소 2개 이상 등장 시 LEVEL_2
 
     @PostConstruct
@@ -101,20 +101,35 @@ public class TerminologyService {
 
     /**
      * Step 2: 원문 텍스트의 전문 용어 농도를 계산하여 난이도를 객관적으로 분석합니다.
-     * @param sourceText 원문 텍스트 (Dbpia 등에서 확보한 원본 데이터)
-     * @param categoryId 해당 원문의 주제 분야 ID
+     * @param sourceText 원문 텍스트
+     * @param categoryIds 분석에 사용할 모든 카테고리 ID 목록 (메인 + 크로스)
      * @return TermCountResult (용어 개수와 밀도)
      */
-    public TermCountResult analyzeSourceText(String sourceText, Long categoryId) {
-        if (sourceText == null || sourceText.isBlank()) return new TermCountResult(0, 0);
+    public TermCountResult analyzeSourceText(String sourceText, List<Long> categoryIds) {
+        if (sourceText == null || sourceText.isBlank() || categoryIds.isEmpty())
+            return new TermCountResult(0, 0);
 
-        // 원본 텍스트에 대해 용어 개수를 세는 기존 로직을 재사용
-        TermCountResult result = countTermsInText(sourceText, categoryId);
+        String normalizedText = sourceText.toLowerCase();
+        String[] tokens = normalizedText.split("\\s+");
+        int tokenCount = Math.max(tokens.length, 1);
 
-        // (선택 사항: 여기서는 레벨을 결정하지 않고 CurationService에서 결정하도록 함)
+        // 두 카테고리의 용어를 합칩니다.
+        Set<String> termsToCheck = new HashSet<>();
+        for (Long id : categoryIds) {
+            termsToCheck.addAll(termDictByCategory.getOrDefault(id, Collections.emptySet()));
+        }
 
-        log.info("analyzeSourceText: categoryId={}, termCount={}, density={}", categoryId, result.getCount(), result.getDensity());
-        return result;
+        int found = 0;
+        for (String term : termsToCheck) {
+            if (term.isEmpty()) continue;
+            if (normalizedText.contains(term)) {
+                found++;
+            }
+        }
+
+        double density = (double) found / tokenCount;
+        // ... 로그 출력
+        return new TermCountResult(found, density);
     }
 
     // helper DTO

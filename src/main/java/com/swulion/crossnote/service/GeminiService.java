@@ -27,9 +27,9 @@ public class GeminiService {
     private static final String GEMINI_2_0_API_URL =
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=";
 
-    // 2.5 모델 URL
-    // private static final String GEMINI_2_5_API_URL =
-    //        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=";
+     //2.5 모델 URL
+//     private static final String GEMINI_2_5_API_URL =
+//            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=";
 
     public AiGeneratedContentDto generateContent(String originalText, CurationLevel targetLevel) {
 
@@ -43,9 +43,12 @@ public class GeminiService {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<GeminiRequestDto> entity = new HttpEntity<>(requestBody, headers);
-        String apiUrl = GEMINI_2_0_API_URL + apiKeys.getGemini(); // 2.0 모델 호출
+        String apiUrl = GEMINI_2_0_API_URL + apiKeys.getGemini(); // 모델에 따라 변경
 
         try {
+            // 필요한 최소 지연시간 = 60초/30회 = 2초
+            Thread.sleep(2000);
+
             ResponseEntity<GeminiResponseDto> response = restTemplate.postForEntity(
                     apiUrl, entity, GeminiResponseDto.class
             );
@@ -58,11 +61,7 @@ public class GeminiService {
                 jsonText = jsonText.replace("\n", " ").replace("\r", " ");
 
                 // 2.0
-                AiJsonResponseDto[] aiJsonArray = objectMapper.readValue(jsonText, AiJsonResponseDto[].class);
-                AiJsonResponseDto aiJson = aiJsonArray[0]; // 첫 번째 항목 사용
-
-                // 2.5
-                //AiJsonResponseDto aiJson = objectMapper.readValue(jsonText, AiJsonResponseDto.class);
+                AiJsonResponseDto aiJson = objectMapper.readValue(jsonText, AiJsonResponseDto.class);
 
                 return new AiGeneratedContentDto(
                         aiJson.getTitle(),
@@ -83,20 +82,21 @@ public class GeminiService {
     // Prompt 생성
     private String createPrompt(String originalText, CurationLevel targetLevel) {
 
+        final String JSON_FORMAT_RULE =
+                "반드시 단일 JSON 객체 형식으로만 출력하며, 마크다운(```json)이나 다른 설명 없이 JSON 객체만을 응답하세요: ";
+
         final String LEVEL_A_PROMPT =
                 "다음 텍스트를 분석해서, 일반인과 초심자를 위한 Level A 제목과 요약을 만들어주세요. " +
-                        "- 반드시 JSON 형식으로만 출력: {\"title\": \"...\", \"description\": \"...\"} " +
-                        "- 제목: 공백 제외 20자 이내, 호기심을 유발하는 자연스러운 한 줄 " +
-                        "- 요약: 공백 제외 100자 이내, 핵심 메시지와 큰 그림 중심, 어려운 전문 용어는 쉬운 표현으로 대체 " +
-                        "- JSON 외 다른 출력 금지, 개행/줄바꿈 없이 한 줄로 작성 " +
+                        JSON_FORMAT_RULE + "{\"title\": \"...\", \"description\": \"...\"} " +
+                        "- 제목: 공백 포함 20자 이내, **대중적이고 호기심을 유발하는 자연스러운 한 줄** " +
+                        "- 요약: 공백 포함 100자 이내, **개념, 핵심 메시지, 큰 그림 위주로 작성하며, 어려운 전문 용어는 반드시 쉬운 표현으로 대체하거나 풀어서 설명해주세요.** " +
                         "[원본 텍스트]: %s";
 
         final String LEVEL_B_PROMPT =
                 "다음 텍스트를 분석해서, 전공자와 전문가를 위한 Level B 제목과 요약을 만들어주세요. " +
-                        "- 반드시 JSON 형식으로만 출력: {\"title\": \"...\", \"description\": \"...\"} " +
-                        "- 제목: 공백 제외 20자 이내, 학술적이고 정보 집중형 " +
-                        "- 요약: 공백 제외 100자 이내, 연구 배경, 방법론, 결과 및 함의 포함, 핵심 전문 용어 유지 " +
-                        "- JSON 외 다른 출력 금지, 개행/줄바꿈 없이 한 줄로 작성 " +
+                        JSON_FORMAT_RULE + "{\"title\": \"...\", \"description\": \"...\"} " +
+                        "- 제목: 공백 제외 20자 이내, **학술적이고 정보 집중형의 한 줄** " +
+                        "- 요약: 공백 포함 100자 이내, **연구 배경, 방법론, 구체적인 결과(수치), 함의를 포함하여 작성하며, 핵심 전문 용어는 그대로 유지해야 합니다.** " +
                         "[원본 텍스트]: %s";
 
         // Level에 따라 프롬프트 선택
