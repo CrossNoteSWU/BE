@@ -4,6 +4,7 @@ import com.swulion.crossnote.dto.balance.BalanceQuizDto;
 import com.swulion.crossnote.dto.balance.SubmitAnswerRequest;
 import com.swulion.crossnote.dto.balance.AnswerResultDto;
 import com.swulion.crossnote.dto.balance.CurationLinkDto;
+import com.swulion.crossnote.dto.balance.BalanceHomeDto;
 import com.swulion.crossnote.service.BalanceGameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,22 @@ public class BalanceGameController {
 	@GetMapping("/today")
 	public ResponseEntity<BalanceQuizDto> getTodayQuiz() {
 		return ResponseEntity.ok(balanceGameService.getTodayQuiz());
+	}
+
+	// 홈: 오늘의 랜덤 + 분야별 랜덤 동시 조회
+	@GetMapping("/home")
+	public ResponseEntity<BalanceHomeDto> getHome(
+		@RequestParam(name = "parentName", required = false) String parentName
+	) {
+		return ResponseEntity.ok(balanceGameService.getHome(parentName));
+	}
+
+	// 1-1) 상위 카테고리별 밸런스 게임 조회 (기본값: 인문사회)
+	@GetMapping("/by-category")
+	public ResponseEntity<BalanceQuizDto> getByParentCategory(
+		@RequestParam(name = "parentName", required = false) String parentName
+	) {
+		return ResponseEntity.ok(balanceGameService.getQuizByParentCategory(parentName));
 	}
 
 	// 2) 정답 제출

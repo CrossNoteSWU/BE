@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface BalanceQuizRepository extends JpaRepository<BalanceQuiz, Long> {
 	List<BalanceQuiz> findByActiveTrue();
+	List<BalanceQuiz> findByActiveTrueAndCategoryIn(List<String> categories);
 }
 
 

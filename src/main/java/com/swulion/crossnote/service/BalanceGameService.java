@@ -4,6 +4,7 @@ import com.swulion.crossnote.dto.balance.BalanceQuizDto;
 import com.swulion.crossnote.dto.balance.SubmitAnswerRequest;
 import com.swulion.crossnote.dto.balance.AnswerResultDto;
 import com.swulion.crossnote.dto.balance.CurationLinkDto;
+import com.swulion.crossnote.dto.balance.BalanceHomeDto;
 import com.swulion.crossnote.entity.balance.BalanceOption;
 import com.swulion.crossnote.entity.balance.BalanceQuiz;
 import com.swulion.crossnote.entity.balance.QuizType;
@@ -12,8 +13,12 @@ import com.swulion.crossnote.repository.BalanceQuizRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import com.swulion.crossnote.entity.Category;
+import com.swulion.crossnote.repository.CategoryRepository;
+
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +26,7 @@ public class BalanceGameService {
 	private final BalanceQuizRepository quizRepository;
 	private final BalanceOptionRepository optionRepository;
 	private final CurationSelectorService curationSelectorService;
+	private final CategoryRepository categoryRepository;
 
 	// 오늘의 퀴즈 랜덤 조회
 	public BalanceQuizDto getTodayQuiz() {
@@ -32,6 +38,36 @@ public class BalanceGameService {
 		BalanceQuiz quiz = active.get(idx);
 		List<BalanceOption> options = optionRepository.findByQuizId(quiz.getId());
 		return BalanceQuizDto.of(quiz, options);
+	}
+
+	// 상위 카테고리(인문사회 등) 하위의 세부 카테고리들에서 랜덤 퀴즈 조회
+	public BalanceQuizDto getQuizByParentCategory(String parentNameOrNull) {
+		String parentName = (parentNameOrNull == null || parentNameOrNull.isBlank()) ? "인문사회" : parentNameOrNull;
+		Category parent = categoryRepository.findByCategoryName(parentName);
+		if (parent == null) {
+			throw new IllegalArgumentException("존재하지 않는 상위 카테고리: " + parentName);
+		}
+		List<Category> children = categoryRepository.findByParentCategoryId(parent);
+		if (children.isEmpty()) {
+			throw new IllegalStateException("해당 상위 카테고리에 세부 카테고리가 없습니다: " + parentName);
+		}
+		List<String> childNames = children.stream().map(Category::getCategoryName).collect(Collectors.toList());
+		List<BalanceQuiz> quizzes = quizRepository.findByActiveTrueAndCategoryIn(childNames);
+		if (quizzes.isEmpty()) {
+			throw new IllegalStateException("해당 카테고리에서 진행 가능한 퀴즈가 없습니다: " + parentName);
+		}
+		int idx = ThreadLocalRandom.current().nextInt(quizzes.size());
+		BalanceQuiz quiz = quizzes.get(idx);
+		List<BalanceOption> options = optionRepository.findByQuizId(quiz.getId());
+		return BalanceQuizDto.of(quiz, options);
+	}
+
+	// 홈: 오늘의 랜덤 + 분야별 랜덤 동시 조회
+	public BalanceHomeDto getHome(String parentNameOrNull) {
+		String parentName = (parentNameOrNull == null || parentNameOrNull.isBlank()) ? "인문사회" : parentNameOrNull;
+		BalanceQuizDto today = getTodayQuiz();
+		BalanceQuizDto byCategory = getQuizByParentCategory(parentName);
+		return new BalanceHomeDto(today, byCategory, parentName);
 	}
 
 	// 정답 제출

@@ -68,7 +68,7 @@ VALUES
 INSERT INTO balance_quiz(id, type, question, ox_answer, category, active)
 VALUES
   (201, 'PREFERENCE', '더 관심가는 주제는?', NULL, '사회학', true),
-  (202, 'PREFERENCE', '더 관심가는 주제는?', NULL, '법학', true);
+  (202, 'PREFERENCE', '더 관심가는 주제는?', NULL, '심리', true);
 
 -- 201: A/B (각 옵션은 하위 카테고리 1개 필수)
 INSERT INTO balance_option(id, quiz_id, label, text, category, curation_id) VALUES
