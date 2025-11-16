@@ -12,4 +12,7 @@ public interface ColumnCategoryRepository extends JpaRepository<ColumnCategory, 
     List<ColumnCategory> findByColumnId(ColumnEntity columnId);
 
     void deleteByColumnId(ColumnEntity columnId);
+
+    // 특정 카테고리에 속한 컬럼 매핑 조회
+    List<ColumnCategory> findByCategoryId(com.swulion.crossnote.entity.Category category);
 }
