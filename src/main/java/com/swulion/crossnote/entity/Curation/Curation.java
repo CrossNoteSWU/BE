@@ -66,7 +66,7 @@ public class Curation {
 
     // 원본 칼럼 작성자 ID
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_user_id", nullable = false)
+    @JoinColumn(name = "author_user_id", nullable = true)
     private User author;
 
     // 원본 칼럼 ID (베스트 칼럼 중복 방지 및 원본 이동용)
