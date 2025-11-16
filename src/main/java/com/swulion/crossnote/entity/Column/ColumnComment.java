@@ -1,5 +1,6 @@
-package com.swulion.crossnote.entity;
+package com.swulion.crossnote.entity.Column;
 
+import com.swulion.crossnote.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;

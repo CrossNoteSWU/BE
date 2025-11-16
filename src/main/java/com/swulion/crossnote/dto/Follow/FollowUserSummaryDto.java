@@ -1,4 +1,4 @@
-package com.swulion.crossnote.dto;
+package com.swulion.crossnote.dto.Follow;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

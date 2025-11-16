@@ -1,8 +1,8 @@
 package com.swulion.crossnote.service;
 
-import com.swulion.crossnote.dto.LocalLoginRequestDto;
-import com.swulion.crossnote.dto.LocalSignUpRequestDto;
-import com.swulion.crossnote.dto.LoginResponseDto;
+import com.swulion.crossnote.dto.Login.LocalLoginRequestDto;
+import com.swulion.crossnote.dto.Login.LocalSignUpRequestDto;
+import com.swulion.crossnote.dto.Login.LoginResponseDto;
 import com.swulion.crossnote.entity.LoginType;
 import com.swulion.crossnote.entity.User;
 import com.swulion.crossnote.repository.UserRepository;

@@ -1,4 +1,4 @@
-package com.swulion.crossnote.dto;
+package com.swulion.crossnote.dto.Column;
 
 import lombok.Getter;
 import lombok.Setter;

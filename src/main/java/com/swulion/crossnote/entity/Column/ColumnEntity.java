@@ -1,6 +1,8 @@
-package com.swulion.crossnote.entity;
+package com.swulion.crossnote.entity.Column;
 
+import com.swulion.crossnote.entity.User;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -10,27 +12,31 @@ import java.time.LocalDateTime;
 @Entity
 @Getter @Setter
 @NoArgsConstructor
-@Table(name = "question")
-public class Question {
+@AllArgsConstructor
+@Table(name = "`column`")
+public class ColumnEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long questionId;
+    private Long columnId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId")
-    private User questionerId;
+    private User columnAutherId;
 
-    @Column(length = 100)
+    @Column(length = 20)
     private String title;
 
-    @Column(length = 1000)
     private String content;
 
-    private Integer likeCount;
+    private String imageUrl;
 
-//    private boolean isTodayQna;
+    private Integer likeCount;
+    private Integer commentCount;
+    private Integer scrapCount;
+
+    private boolean isBestColumn;
 
     private LocalDateTime createdAt;
-
     private LocalDateTime updatedAt;
 }

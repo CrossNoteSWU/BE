@@ -1,8 +1,8 @@
 package com.swulion.crossnote.controller;
 
-import com.swulion.crossnote.dto.LocalLoginRequestDto;
-import com.swulion.crossnote.dto.LocalSignUpRequestDto;
-import com.swulion.crossnote.dto.LoginResponseDto;
+import com.swulion.crossnote.dto.Login.LocalLoginRequestDto;
+import com.swulion.crossnote.dto.Login.LocalSignUpRequestDto;
+import com.swulion.crossnote.dto.Login.LoginResponseDto;
 import com.swulion.crossnote.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

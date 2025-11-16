@@ -1,4 +1,4 @@
-package com.swulion.crossnote.dto;
+package com.swulion.crossnote.dto.Login;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
