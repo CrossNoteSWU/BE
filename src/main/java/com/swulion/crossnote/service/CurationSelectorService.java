@@ -37,6 +37,23 @@ public class CurationSelectorService {
 		ColumnEntity column = mappings.get(idx).getColumnId();
 		return Optional.ofNullable(column != null ? column.getColumnId() : null);
 	}
+
+	/**
+	 * 옵션 카테고리가 반드시 '하위 카테고리(세부 분야)'여야 한다는 규칙 검증
+	 * - 존재하지 않거나 상위 카테고리(부모가 null)이면 예외
+	 */
+	public void validateMustBeSubCategory(String categoryName) {
+		if (categoryName == null || categoryName.isBlank()) {
+			throw new IllegalArgumentException("옵션 카테고리는 반드시 1개의 세부 분야여야 합니다.");
+		}
+		Category category = categoryRepository.findByCategoryName(categoryName);
+		if (category == null) {
+			throw new IllegalArgumentException("존재하지 않는 카테고리입니다: " + categoryName);
+		}
+		if (category.getParentCategoryId() == null) {
+			throw new IllegalArgumentException("상위 카테고리는 사용할 수 없습니다. 세부 분야(하위 카테고리)만 허용됩니다: " + categoryName);
+		}
+	}
 }
 
 

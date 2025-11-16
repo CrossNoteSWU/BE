@@ -70,11 +70,11 @@ VALUES
   (201, 'PREFERENCE', '더 관심가는 주제는?', NULL, '사회학', true),
   (202, 'PREFERENCE', '더 관심가는 주제는?', NULL, '법학', true);
 
--- 201: A/B
-INSERT INTO balance_option(id, quiz_id, label, text, curation_id) VALUES
-  (11001, 201, 'A', '근시 유전자는 왜 사라지지 않았을까?', 30001),
-  (11002, 201, 'B', '무기징역과 사형수의 교도소 생활은 뭐가 다를까?', 30002);
+-- 201: A/B (각 옵션은 하위 카테고리 1개 필수)
+INSERT INTO balance_option(id, quiz_id, label, text, category, curation_id) VALUES
+  (11001, 201, 'A', '근시 유전자는 왜 사라지지 않았을까?', '생물', 30001),
+  (11002, 201, 'B', '무기징역과 사형수의 교도소 생활은 뭐가 다를까?', '사회학', 30002);
 -- 202: A/B
-INSERT INTO balance_option(id, quiz_id, label, text, curation_id) VALUES
-  (11003, 202, 'A', '도시의 젠트리피케이션, 누구를 위한 변화일까?', 30003),
-  (11004, 202, 'B', '가짜뉴스는 왜 확산되는가?', 30004);
+INSERT INTO balance_option(id, quiz_id, label, text, category, curation_id) VALUES
+  (11003, 202, 'A', '도시의 젠트리피케이션, 누구를 위한 변화일까?', '사회학', 30003),
+  (11004, 202, 'B', '가짜뉴스는 왜 확산되는가?', '언어', 30004);

@@ -3,6 +3,7 @@ package com.swulion.crossnote.controller;
 import com.swulion.crossnote.dto.balance.BalanceQuizDto;
 import com.swulion.crossnote.dto.balance.SubmitAnswerRequest;
 import com.swulion.crossnote.dto.balance.AnswerResultDto;
+import com.swulion.crossnote.dto.balance.CurationLinkDto;
 import com.swulion.crossnote.service.BalanceGameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,6 +35,30 @@ public class BalanceGameController {
 		@RequestBody SubmitAnswerRequest request
 	) {
 		return ResponseEntity.ok(balanceGameService.submitAnswer(quizId, request));
+	}
+
+	// 3) OX 결과 → 동일 카테고리 큐레이션으로 이동
+	@GetMapping("/{quizId}/curation/ox")
+	public ResponseEntity<CurationLinkDto> getCurationForOx(@PathVariable("quizId") Long quizId) {
+		return ResponseEntity.ok(balanceGameService.getCurationForOx(quizId));
+	}
+
+	// 4) 선호도 결과 → 선택지 카테고리 큐레이션으로 이동
+	@GetMapping("/{quizId}/curation/preference")
+	public ResponseEntity<CurationLinkDto> getCurationForPreference(
+		@PathVariable("quizId") Long quizId,
+		@RequestParam("optionId") Long optionId
+	) {
+		return ResponseEntity.ok(balanceGameService.getCurationForPreference(quizId, optionId));
+	}
+
+	// 5) 선호도 → 다른 선택지 큐레이션
+	@GetMapping("/{quizId}/other-curation")
+	public ResponseEntity<CurationLinkDto> getOtherCuration(
+		@PathVariable("quizId") Long quizId,
+		@RequestParam("currentOptionId") Long currentOptionId
+	) {
+		return ResponseEntity.ok(balanceGameService.getOtherOptionCuration(quizId, currentOptionId));
 	}
 }
 
