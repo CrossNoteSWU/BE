@@ -1,6 +1,5 @@
-package com.swulion.crossnote.dto;
+package com.swulion.crossnote.dto.Column;
 
-import com.swulion.crossnote.entity.Category;
 import com.swulion.crossnote.entity.User;
 
 public record ColumnListDto(Long columnId, User columnAutherId,

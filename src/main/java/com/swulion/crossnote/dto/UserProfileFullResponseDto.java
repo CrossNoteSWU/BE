@@ -1,5 +1,6 @@
 package com.swulion.crossnote.dto;
 
+import com.swulion.crossnote.dto.Column.ColumnReadResponseDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

@@ -1,6 +1,5 @@
-package com.swulion.crossnote.dto;
+package com.swulion.crossnote.dto.Question;
 
-import com.swulion.crossnote.entity.QuestionCategory;
 import jakarta.persistence.Column;
 import lombok.Getter;
 import lombok.Setter;

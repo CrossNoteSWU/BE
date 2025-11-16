@@ -1,13 +1,11 @@
 package com.swulion.crossnote.controller;
 
-import com.swulion.crossnote.dto.QuestionListDto;
-import com.swulion.crossnote.dto.QuestionRequestDto;
-import com.swulion.crossnote.dto.QuestionResponseDto;
-import com.swulion.crossnote.entity.Question;
+import com.swulion.crossnote.dto.Question.QuestionListDto;
+import com.swulion.crossnote.dto.Question.QuestionRequestDto;
+import com.swulion.crossnote.dto.Question.QuestionResponseDto;
 import com.swulion.crossnote.service.QuestionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

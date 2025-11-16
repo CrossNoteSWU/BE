@@ -1,5 +1,6 @@
-package com.swulion.crossnote.entity;
+package com.swulion.crossnote.entity.QA;
 
+import com.swulion.crossnote.entity.Category;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

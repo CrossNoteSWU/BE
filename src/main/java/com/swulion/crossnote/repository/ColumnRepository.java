@@ -1,6 +1,6 @@
 package com.swulion.crossnote.repository;
 
-import com.swulion.crossnote.entity.ColumnEntity;
+import com.swulion.crossnote.entity.Column.ColumnEntity;
 import com.swulion.crossnote.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

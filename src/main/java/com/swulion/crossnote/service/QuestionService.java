@@ -1,13 +1,15 @@
 package com.swulion.crossnote.service;
 
-import com.swulion.crossnote.dto.QuestionListDto;
-import com.swulion.crossnote.dto.QuestionRequestDto;
-import com.swulion.crossnote.dto.QuestionResponseDto;
+import com.swulion.crossnote.dto.Question.QuestionListDto;
+import com.swulion.crossnote.dto.Question.QuestionRequestDto;
+import com.swulion.crossnote.dto.Question.QuestionResponseDto;
 import com.swulion.crossnote.entity.*;
+import com.swulion.crossnote.entity.QA.Answer;
+import com.swulion.crossnote.entity.QA.Question;
+import com.swulion.crossnote.entity.QA.QuestionCategory;
 import com.swulion.crossnote.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;

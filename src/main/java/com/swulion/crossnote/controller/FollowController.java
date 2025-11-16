@@ -1,7 +1,7 @@
 package com.swulion.crossnote.controller;
 
-import com.swulion.crossnote.dto.FollowListResponseDto;
-import com.swulion.crossnote.dto.FollowStatusResponseDto;
+import com.swulion.crossnote.dto.Follow.FollowListResponseDto;
+import com.swulion.crossnote.dto.Follow.FollowStatusResponseDto;
 import com.swulion.crossnote.service.CustomUserDetails;
 import com.swulion.crossnote.service.FollowService;
 import lombok.RequiredArgsConstructor;

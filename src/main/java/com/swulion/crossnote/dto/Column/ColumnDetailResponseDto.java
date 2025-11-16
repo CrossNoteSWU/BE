@@ -1,6 +1,4 @@
-package com.swulion.crossnote.dto;
-
-import jakarta.persistence.criteria.CriteriaBuilder;
+package com.swulion.crossnote.dto.Column;
 
 import java.time.LocalDateTime;
 
