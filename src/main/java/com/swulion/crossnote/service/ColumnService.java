@@ -29,22 +29,6 @@ public class ColumnService {
     private final CategoryRepository categoryRepository;
     private final ColumnCategoryRepository columnCategoryRepository;
 
-    /* 칼럼 피드 */
-//    public List<ColumnListDto> getColumnHome(){
-//        List<ColumnEntity> columns = columnRepository.findAllOrderByCreateDateDesc();
-//        List<ColumnListDto> columnListDtos = new ArrayList<>();
-//        for (ColumnEntity columnEntity : columns) {
-//        columnListDtos.add(new ColumnListDto(
-//                columnEntity.getColumnId(),
-//                columnEntity.getColumnAutherId(),
-//                columnEntity.getTitle(),
-//                columnEntity.getContent(),
-//                columnEntity.getImageUrl(),
-//                columnEntity.getLikeCount(),
-//                columnEntity.getCommentCount()
-//        ));}
-//        return columnListDtos;
-//    }
 
     /* 칼럼 생성 */
     public ColumnDetailResponseDto createColumn(ColumnRequestDto columnRequestDto, Long loginUserId) {
@@ -137,8 +121,18 @@ public class ColumnService {
     }
 
     /* 전체 칼럼 조회 */
-    public List<ColumnReadResponseDto> getColumnHome() {
-        List<ColumnEntity> columnEntities = columnRepository.findAllByOrderByCreatedAtDesc();
+    public List<ColumnReadResponseDto> getColumnHome(String sort) {
+        List<ColumnEntity> columnEntities = new ArrayList<>();
+        if (sort.equals("latest")) {
+            columnEntities = columnRepository.findAllByOrderByCreatedAtDesc();
+        }else if(sort.equals("popular")){
+            columnEntities = columnRepository.findAllByOrderByLikeCountDesc();
+        }else if(sort.equals("comment")){
+            columnEntities = columnRepository.findAllByOrderByCommentCountDesc();
+        }else{
+            columnEntities = columnRepository.findAllByOrderByCreatedAtDesc();
+        }
+
         List<ColumnReadResponseDto> columnReadResponseDtos = new ArrayList<>();
         for (ColumnEntity columnEntity : columnEntities) {
             ColumnReadResponseDto columnReadResponseDto = new ColumnReadResponseDto();

@@ -21,8 +21,8 @@ public class ColumnController {
 
     /* Column 홈 */
     @GetMapping("/home")
-    public ResponseEntity<List<ColumnReadResponseDto>> getColumnHome() {
-        List<ColumnReadResponseDto> columnReadResponseDtos = columnService.getColumnHome();
+    public ResponseEntity<List<ColumnReadResponseDto>> getColumnHome(@RequestParam(defaultValue = "latest") String sort) {
+        List<ColumnReadResponseDto> columnReadResponseDtos = columnService.getColumnHome(sort);
         return ResponseEntity.ok(columnReadResponseDtos);
     }
 

@@ -18,6 +18,8 @@ public interface ColumnRepository extends JpaRepository<ColumnEntity, Long> {
     List<ColumnEntity> findAllByOrderByCreatedAtDesc();
     //댓글많은 순
     List<ColumnEntity> findAllByOrderByCommentCountDesc();
+    //인기순
+    List<ColumnEntity> findAllByOrderByLikeCountDesc();
 
     Page<ColumnEntity> findByColumnAutherIdOrderByCreatedAtDesc(User author, Pageable pageable);
 }
