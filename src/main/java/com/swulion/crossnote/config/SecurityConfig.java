@@ -73,6 +73,7 @@ public class SecurityConfig {
                                 .requestMatchers(allowUrls).permitAll()  // 허용 URL 설정
                                 // 그 외 모든 요청은 인증 필요
                                 .anyRequest().authenticated()
+                                .requestMatchers("/", "/health").permitAll()
                 )
 
                 // JWT 필터

@@ -8,6 +8,6 @@ public class HomeController {
 
     @GetMapping("/")
     public String home() {
-        return "Homemate API is running on EC2!";
+        return "Crossnote API is running on EC2!";
     }
 }
