@@ -1,7 +1,6 @@
 package com.swulion.crossnote.jwt;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +25,7 @@ public class JwtTokenProvider {
     public JwtTokenProvider(@Value("${jwt.secret-key}") String secretKey,
                             @Value("${jwt.access-token-expiration-time}") long accessTokenExpirationTime,
                             @Value("${jwt.refresh-token-expiration-time}") long refreshTokenExpirationTime) {
+
         byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.accessTokenExpirationTime = accessTokenExpirationTime;
