@@ -72,6 +72,7 @@ public class SecurityConfig {
                                 .requestMatchers("/auth/logout", "/auth/local/**", "/auth/login/**", "/auth/refresh").permitAll()
                                 .requestMatchers(allowUrls).permitAll()  // 허용 URL 설정
                                 // 그 외 모든 요청은 인증 필요
+                                .requestMatchers("/", "/health").permitAll()
                                 .anyRequest().authenticated()
                 )
 
