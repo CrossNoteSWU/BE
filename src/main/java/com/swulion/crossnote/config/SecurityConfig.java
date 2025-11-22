@@ -17,9 +17,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.http.HttpMethod;
 
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Arrays;
+import java.util.List;
 
 /* Spring Security 설정 */
 @Configuration
@@ -47,40 +48,35 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    // CorsConfig의 Bean을 주입받아 사용
+    private final CorsConfigurationSource corsConfigurationSource;
+
     // 'SecurityFilterChain' 빈을 추가하여 HTTP 보안 설정을 구성
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // CORS 활성화 (csrf.disable() 전에 위치) - CorsConfig의 Bean 사용
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                
                 // CSRF 보호 기능 비활성화
                 .csrf(csrf -> csrf.disable())
 
-                // [CORS 설정 추가]
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // 세션 관리
-                // IF_REQUIRED는 OAuth2 로그인 시에는 세션을 사용하지만 JWT 인증 시에는 사용하지 않도록 함
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                // 세션 관리: STATELESS (JWT 사용 시 세션 미사용)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 // 기본 폼 로그인과 HTTP Basic 인증을 비활성화
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
 
                 // API 엔드포인트별 접근 권한을 설정
-                .authorizeHttpRequests(authorizeRequests ->
-                        authorizeRequests
-                                // OPTIONS preflight 요청은 모두 허용 (CORS)
-                                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                                // 로그인/로그아웃 관련은 모두 허용
-                                .requestMatchers("/auth/logout", "/auth/local/**", "/auth/login/**", "/auth/refresh").permitAll()
-                                .requestMatchers(allowUrls).permitAll()  // 허용 URL 설정
-                                // 그 외 모든 요청은 인증 필요
-                                .requestMatchers("/", "/health").permitAll()
-                                .anyRequest().authenticated()
+                .authorizeHttpRequests(auth -> auth
+                        // OPTIONS preflight 요청은 모두 허용 (CORS)
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // /auth/** 경로는 모두 허용
+                        .requestMatchers("/auth/**").permitAll()
+                        // 그 외 모든 요청은 인증 필요
+                        .anyRequest().authenticated()
                 )
-
-                // JWT 필터
-                // Spring Security 필터 체인의 가장 앞단에 배치하여, 모든 요청을 토큰 검사부터 하도록 설정
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
                 // OAuth2 로그인 설정
                 // 소셜 로그인(OAuth2) 기능 활성화하고, 관련 서비스(CustomOAuth2User, OAuth2LoginSuccessHandler)를(을) 연결
@@ -103,25 +99,30 @@ public class SecurityConfig {
                         })
                 );
 
+        // JWT 필터: Spring Security 필터 체인의 가장 앞단에 배치하여, 모든 요청을 토큰 검사부터 하도록 설정
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
-    // [CORS 설정 Bean 추가]
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    // [CORS 설정 Bean 추가] - SecurityConfig에서도 CORS 설정 유지 (CorsConfig와 공존)
+    @Bean("securityCorsConfigurationSource")
+    public CorsConfigurationSource securityCorsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-
-        // dev 환경: localhost:3000 허용
-        config.addAllowedOrigin("http://localhost:3000");
-        // config.addAllowedOrigin("https://frontend-domain.com"); // 배포할 프론트엔드 도메인
-
-        // 허용할 HTTP 메서드: POST, OPTIONS (요청에 따라 GET, PUT, DELETE, PATCH도 포함)
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         
-        // 허용할 헤더: Content-Type, Authorization
-        config.setAllowedHeaders(Arrays.asList("Content-Type", "Authorization", "Accept"));
+        // 프론트 개발용 origin 허용 (dev: localhost:3000, prod: cross-note.com)
+        config.setAllowedOrigins(List.of(
+                "http://localhost:3000",
+                "https://cross-note.com"
+        ));
         
-        // 자격 증명 허용
+        // 허용할 HTTP 메서드: GET, POST, PUT, PATCH, DELETE, OPTIONS
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        
+        // 허용할 헤더: 모든 헤더 허용 (Content-Type, Authorization 등 포함)
+        config.setAllowedHeaders(List.of("*"));
+        
+        // 자격 증명 허용 (쿠키/Authorization 헤더 사용)
         config.setAllowCredentials(true);
         
         // preflight 요청의 캐시 시간 (초 단위)
