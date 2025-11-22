@@ -1,4 +1,4 @@
-package com.swulion.crossnote.entity;
+package com.swulion.crossnote.entity.QA;
 
 import jakarta.persistence.*;
 import lombok.Getter;

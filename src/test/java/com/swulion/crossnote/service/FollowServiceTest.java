@@ -1,7 +1,7 @@
 package com.swulion.crossnote.service;
 
-import com.swulion.crossnote.dto.FollowListResponseDto;
-import com.swulion.crossnote.dto.FollowStatusResponseDto;
+import com.swulion.crossnote.dto.Follow.FollowListResponseDto;
+import com.swulion.crossnote.dto.Follow.FollowStatusResponseDto;
 import com.swulion.crossnote.entity.LoginType;
 import com.swulion.crossnote.entity.User;
 import com.swulion.crossnote.repository.FollowRepository;

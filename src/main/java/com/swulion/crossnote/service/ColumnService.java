@@ -1,12 +1,11 @@
 package com.swulion.crossnote.service;
 
-import com.swulion.crossnote.dto.ColumnListDto;
-import com.swulion.crossnote.dto.ColumnReadResponseDto;
-import com.swulion.crossnote.dto.ColumnRequestDto;
-import com.swulion.crossnote.dto.ColumnDetailResponseDto;
+import com.swulion.crossnote.dto.Column.ColumnReadResponseDto;
+import com.swulion.crossnote.dto.Column.ColumnRequestDto;
+import com.swulion.crossnote.dto.Column.ColumnDetailResponseDto;
 import com.swulion.crossnote.entity.Category;
-import com.swulion.crossnote.entity.ColumnCategory;
-import com.swulion.crossnote.entity.ColumnEntity;
+import com.swulion.crossnote.entity.Column.ColumnCategory;
+import com.swulion.crossnote.entity.Column.ColumnEntity;
 import com.swulion.crossnote.entity.User;
 import com.swulion.crossnote.repository.CategoryRepository;
 import com.swulion.crossnote.repository.ColumnCategoryRepository;

@@ -1,10 +1,8 @@
 package com.swulion.crossnote.controller;
 
-import com.sun.security.auth.UserPrincipal;
-import com.swulion.crossnote.dto.ColumnListDto;
-import com.swulion.crossnote.dto.ColumnReadResponseDto;
-import com.swulion.crossnote.dto.ColumnRequestDto;
-import com.swulion.crossnote.dto.ColumnDetailResponseDto;
+import com.swulion.crossnote.dto.Column.ColumnReadResponseDto;
+import com.swulion.crossnote.dto.Column.ColumnRequestDto;
+import com.swulion.crossnote.dto.Column.ColumnDetailResponseDto;
 import com.swulion.crossnote.service.ColumnService;
 import com.swulion.crossnote.service.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
