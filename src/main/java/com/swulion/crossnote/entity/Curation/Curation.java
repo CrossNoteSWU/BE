@@ -1,7 +1,7 @@
 package com.swulion.crossnote.entity.Curation;
 
 import com.swulion.crossnote.entity.Category;
-import com.swulion.crossnote.entity.ColumnEntity;
+import com.swulion.crossnote.entity.Column.ColumnEntity;
 import com.swulion.crossnote.entity.User;
 import jakarta.persistence.*;
 import lombok.*;

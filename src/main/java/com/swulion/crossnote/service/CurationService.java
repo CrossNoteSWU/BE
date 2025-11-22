@@ -99,7 +99,7 @@ public class CurationService {
         /* 기록 */
         // 3. 현재 실행할 배치 번호 설정 (수동 조정 필요: 1, 2, 3, 4)
         //    실제 스케줄러에서는 이 값을 DB나 캐시에서 관리하며, 다음 실행 시 +1 되어야 함
-        int currentBatchIndex = 1;
+        int currentBatchIndex = 2;
 
         int startIndex = (currentBatchIndex - 1) * CATEGORIES_PER_BATCH; // 0
         // endIndex는 현재 배치 사이즈(8)를 넘지 않도록, 전체 리스트 사이즈(29)를 넘지 않도록 설정

@@ -1,7 +1,7 @@
 package com.swulion.crossnote.service;
 
-import com.swulion.crossnote.entity.ColumnCategory;
-import com.swulion.crossnote.entity.ColumnEntity;
+import com.swulion.crossnote.entity.Column.ColumnCategory;
+import com.swulion.crossnote.entity.Column.ColumnEntity;
 import com.swulion.crossnote.entity.Category;
 import com.swulion.crossnote.entity.Curation.Curation;
 import com.swulion.crossnote.entity.Curation.CurationType;

@@ -58,12 +58,14 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))   // ✅ CORS 활성화
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/curation").permitAll() // 큐레이션 목록 조회는 허용
+                        .requestMatchers("/curation/**").authenticated() // 그 외 큐레이션은 인증 필요
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
