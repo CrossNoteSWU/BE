@@ -68,6 +68,8 @@ public class SecurityConfig {
                 // API 엔드포인트별 접근 권한을 설정
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
+                                // OPTIONS preflight 요청은 모두 허용 (CORS)
+                                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                                 // 로그인/로그아웃 관련은 모두 허용
                                 .requestMatchers("/auth/logout", "/auth/local/**", "/auth/login/**", "/auth/refresh").permitAll()
                                 .requestMatchers(allowUrls).permitAll()  // 허용 URL 설정
@@ -109,12 +111,21 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.addAllowedOrigin("http://localhost:3000"); // 로컬 프론트엔드
+        // dev 환경: localhost:3000 허용
+        config.addAllowedOrigin("http://localhost:3000");
         // config.addAllowedOrigin("https://frontend-domain.com"); // 배포할 프론트엔드 도메인
 
+        // 허용할 HTTP 메서드: POST, OPTIONS (요청에 따라 GET, PUT, DELETE, PATCH도 포함)
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
+        
+        // 허용할 헤더: Content-Type, Authorization
+        config.setAllowedHeaders(Arrays.asList("Content-Type", "Authorization", "Accept"));
+        
+        // 자격 증명 허용
         config.setAllowCredentials(true);
+        
+        // preflight 요청의 캐시 시간 (초 단위)
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config); // 모든 경로에 적용
