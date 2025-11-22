@@ -18,7 +18,6 @@ public class ApiKeys {
     private String dbpia;
 
     private String kci;
-    private String assemblyLib;
 
     private String gemini;
 

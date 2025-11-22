@@ -3,6 +3,7 @@ package com.swulion.crossnote.service;
 import com.swulion.crossnote.client.CurationSourceClient;
 //import com.swulion.crossnote.client.KciClient;
 //import com.swulion.crossnote.client.NationalLibClient;
+import com.swulion.crossnote.client.NlBookClient;
 import com.swulion.crossnote.dto.Curation.*;
 import com.swulion.crossnote.entity.Category;
 import com.swulion.crossnote.entity.Curation.Curation;
@@ -47,8 +48,9 @@ public class CurationService {
     private final GeminiService geminiService;
     private final TerminologyService terminologyService;
 
+    // 테스트용
     //private final KciClient kciClient;
-    //private final NationalLibClient nationalLibClient;
+    private final NlBookClient nlBookClient;
 
     private final Random random = new Random(); // (랜덤 선택용)
 
@@ -97,7 +99,7 @@ public class CurationService {
         /* 기록 */
         // 3. 현재 실행할 배치 번호 설정 (수동 조정 필요: 1, 2, 3, 4)
         //    실제 스케줄러에서는 이 값을 DB나 캐시에서 관리하며, 다음 실행 시 +1 되어야 함
-        int currentBatchIndex = 1; // 현재 첫 번째 배치 (1)만 실행. (11/15 오후 3시 30분)
+        int currentBatchIndex = 1;
 
         int startIndex = (currentBatchIndex - 1) * CATEGORIES_PER_BATCH; // 0
         // endIndex는 현재 배치 사이즈(8)를 넘지 않도록, 전체 리스트 사이즈(29)를 넘지 않도록 설정
@@ -124,7 +126,7 @@ public class CurationService {
         log.info("데일리 큐레이션 생성 작업 완료.");
     }
 
-//    // 테스트용 - 제미나이x. KCI와 NationalLib만
+//    // 테스트용 - 제미나이x. KCI
 //    @Transactional
 //    public void createDailyCurations() {
 //        log.warn("[API CLIENT TEST MODE]
@@ -145,21 +147,39 @@ public class CurationService {
 //            log.error("[API TEST] KCI Client 호출 중 예외 발생", e);
 //        }
 //
-//        // NationalLib Client 테스트
-//        try {
-//            log.info("[API TEST] NationalLibClient.fetchSource('{}') 호출 시도...", testQuery);
-//            CurationSourceDto nlResult = nationalLibClient.fetchSource(testQuery);
-//
-//            if (nlResult != null && nlResult.getOriginalText() != null) {
-//                log.info("[API TEST] NationalLib Client 성공! Title: {}", nlResult.getOriginalText().substring(0, Math.min(nlResult.getOriginalText().length(), 70)));
-//            } else {
-//                log.warn("[API TEST] NationalLib Client가 null을 반환했습니다. (로그 확인 필요)");
-//            }
-//        } catch (Exception e) {
-//            log.error("[API TEST] NationalLib Client 호출 중 예외 발생", e);
-//        }
-//
 //        log.warn("[API CLIENT TEST MODE] 테스트 완료.");
+//    }
+
+//    // 테스트용 - 제미나이x. 국립중앙도서관
+//    @Transactional
+//    public void createDailyCurations() {
+//        log.warn("[API CLIENT TEST MODE] 국립중앙도서관 API 테스트 시작");
+//
+//        String testQuery = "인공지능"; // 테스트할 검색어 (결과가 많을 법한 단어 추천)
+//
+//        try {
+//            log.info("[API TEST] NlkApiClient.searchBooks('{}') 호출 시도...", testQuery);
+//
+//            // 1. API 호출
+//            List<NlBookResponseDto> results = nlBookClient.searchBooks(testQuery);
+//
+//            // 2. 결과 확인
+//            if (results != null && !results.isEmpty()) {
+//                log.info("[API TEST] 성공!! 총 {}건의 데이터를 가져왔습니다.", results.size());
+//
+//                // 첫 번째 책 정보만 로그로 찍어보기
+//                NlBookResponseDto firstBook = results.get(0);
+//                log.info("   - 첫 번째 책 제목: {}", firstBook.getTitle());
+//                log.info("   - 첫 번째 책 저자: {}", firstBook.getAuthor());
+//                log.info("   - 첫 번째 책 출판사: {}", firstBook.getPublisher());
+//
+//            } else {
+//                log.warn("[API TEST] 결과가 비어있습니다 (0건). (검색어가 없거나, 파싱에 실패했을 수 있음)");
+//            }
+//
+//        } catch (Exception e) {
+//            log.error("[API TEST] NlkApiClient 호출 중 치명적 에러 발생", e);
+//        }
 //    }
 
     // '인사이트' 큐레이션 생성

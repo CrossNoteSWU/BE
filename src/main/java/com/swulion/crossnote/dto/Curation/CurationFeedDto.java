@@ -10,7 +10,7 @@ public class CurationFeedDto {
     private Long curationId;
     private String title;
     private String description;
-    private String sourceUrl;
+    private String sourceUrl; // 원문 링크
     private String imageUrl;
     private CurationType curationType;
     private CurationLevel curationLevel;
