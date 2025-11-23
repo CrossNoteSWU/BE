@@ -4,11 +4,12 @@ import com.swulion.crossnote.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Getter
+@Getter @Setter
 @NoArgsConstructor
 @Table(name = "answer")
 public class Answer {
@@ -26,6 +27,7 @@ public class Answer {
     private User answererID; // 답변자
 
     private String content;
+    private Integer likeCount = 0;
 
     private LocalDateTime createdAt;
 
