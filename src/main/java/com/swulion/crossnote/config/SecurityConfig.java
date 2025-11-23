@@ -26,15 +26,18 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomOAuth2User customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final CorsConfigurationSource corsConfigurationSource;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                          CustomOAuth2User customOAuth2UserService,
                          OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
+                         OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
                          @Qualifier("corsConfigurationSource") CorsConfigurationSource corsConfigurationSource) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.customOAuth2UserService = customOAuth2UserService;
         this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
+        this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
         this.corsConfigurationSource = corsConfigurationSource;
     }
 
