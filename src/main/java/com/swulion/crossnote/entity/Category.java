@@ -21,7 +21,7 @@ public class Category {
     private String categoryName;
 
     @ManyToOne
-    @JoinColumn(name = "parent_category_id")
+    @JoinColumn(name = "parentCategoryId")
     private Category parentCategoryId;
 
     private LocalDateTime createdAt;
