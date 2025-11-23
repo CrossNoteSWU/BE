@@ -2,6 +2,7 @@ package com.swulion.crossnote.service;
 
 import com.swulion.crossnote.dto.NotificationGetDto;
 import com.swulion.crossnote.entity.Notification;
+import com.swulion.crossnote.entity.NotificationType;
 import com.swulion.crossnote.entity.User;
 import com.swulion.crossnote.repository.NotificationRepository;
 import com.swulion.crossnote.repository.SseEmitterRepository;
@@ -17,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@Transactional
+
 @RequiredArgsConstructor
 public class NotificationService {
 
@@ -25,6 +26,7 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final NotificationRepository notificationRepository;
 
+    @Transactional
     public SseEmitter subscribe(Long userId) {
         SseEmitter emitter = new SseEmitter();
         sseEmitterRepository.save(userId, emitter);
@@ -43,7 +45,7 @@ public class NotificationService {
 
     @Transactional
     public void sendNotification(Long receiverId, Long actorId,
-                                 String targetType, Long TargetId, String message) {
+                                 NotificationType targetType, Long TargetId, String message) {
         User receiver = userRepository.findById(receiverId).orElseThrow(
                 ()->new RuntimeException("User not found")
         );
@@ -73,6 +75,7 @@ public class NotificationService {
     }
 
     // 나에게 온 알림 전체 보기
+    @Transactional
     public List<NotificationGetDto> getNotifications(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(
                 ()->new RuntimeException("User not found")
@@ -128,6 +131,7 @@ public class NotificationService {
         return dtos;
     }
     // 알림 개별 읽음 처리
+    @Transactional
     public void readNotification(Long userId, Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId).orElseThrow(
                 ()->new RuntimeException("Notification not found")
@@ -137,6 +141,7 @@ public class NotificationService {
     }
 
     // 알림 전체 읽음 처리
+    @Transactional
     public void readAllNotifications(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(
                 ()->new RuntimeException("User not found")
@@ -147,6 +152,7 @@ public class NotificationService {
     }
 
     // 알림 전체 삭제
+    @Transactional
     public void deleteNotification(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(
                 ()->new RuntimeException("User not found")

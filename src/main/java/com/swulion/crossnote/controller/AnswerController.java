@@ -38,4 +38,11 @@ public class AnswerController {
         return ResponseEntity.ok(answerService.deleteAnswer(userId, answerId));
     }
 
+    @PatchMapping("/like/{answerId}")
+    public ResponseEntity<String> likeAnswer(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long answerId) {
+        Long userId = userDetails.getUser().getUserId();
+        return ResponseEntity.ok(answerService.likeAnswer(userId, answerId));
+
+    }
+
 }

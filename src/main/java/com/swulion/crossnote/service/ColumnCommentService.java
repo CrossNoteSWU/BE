@@ -5,6 +5,7 @@ import com.swulion.crossnote.dto.Column.ColumnCommentRequestDto;
 import com.swulion.crossnote.dto.Column.ColumnCommentResponseDto;
 import com.swulion.crossnote.entity.Column.ColumnComment;
 import com.swulion.crossnote.entity.Column.ColumnEntity;
+import com.swulion.crossnote.entity.NotificationType;
 import com.swulion.crossnote.entity.User;
 import com.swulion.crossnote.repository.ColumnCommentRepository;
 import com.swulion.crossnote.repository.ColumnRepository;
@@ -42,8 +43,8 @@ public class ColumnCommentService {
 
         column.setCommentCount(column.getCommentCount() + 1);
         Long columnWriterId = column.getColumnAutherId().getUserId();
-        String message = user.getName() + " 님이 내 칼럼에 댓글을 남겼어요.";
-        notificationService.sendNotification(columnWriterId, userId, "Column", column.getColumnId(), message);
+        String message = user.getName() + "님이 내 칼럼에 댓글을 남겼어요.";
+        notificationService.sendNotification(columnWriterId, userId, NotificationType.COLUMN, column.getColumnId(), message);
 
         ColumnCommentResponseDto columnCommentResponseDto = new ColumnCommentResponseDto();
         columnCommentResponseDto.setColumnCommentId(columnComment.getCommentId());

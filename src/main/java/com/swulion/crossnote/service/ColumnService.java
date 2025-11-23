@@ -5,8 +5,14 @@ import com.swulion.crossnote.entity.Category;
 import com.swulion.crossnote.entity.Column.ColumnCategory;
 import com.swulion.crossnote.entity.Column.ColumnComment;
 import com.swulion.crossnote.entity.Column.ColumnEntity;
+import com.swulion.crossnote.entity.Curation.Like;
+import com.swulion.crossnote.entity.Curation.Scrap;
+import com.swulion.crossnote.entity.Curation.ScrapTargetType;
+import com.swulion.crossnote.entity.NotificationType;
 import com.swulion.crossnote.entity.User;
 import com.swulion.crossnote.repository.*;
+import com.swulion.crossnote.repository.Curation.LikeRepository;
+import com.swulion.crossnote.repository.Curation.ScrapRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +31,9 @@ public class ColumnService {
     private final CategoryRepository categoryRepository;
     private final ColumnCategoryRepository columnCategoryRepository;
     private final ColumnCommentRepository columnCommentRepository;
+    private final LikeRepository likeRepository;
+    private final NotificationService notificationService;
+    private final ScrapRepository scrapRepository;
 
 
     /* 칼럼 생성 */
@@ -248,14 +257,60 @@ public class ColumnService {
         return categories;
     }
 
-//    public String likeColumn(Long userId, Long columnId) {
-//        User user = userRepository.findById(userId).orElseThrow(
-//                () -> new EntityNotFoundException("User Not Found")
-//        );
-//        ColumnEntity columnEntity = columnRepository.findById(columnId).orElseThrow(
-//                () -> new EntityNotFoundException("Column Not Found")
-//        );
-//
-//
-//    }
+    @Transactional
+    public String likeColumn(Long userId, Long columnId) {
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new EntityNotFoundException("User Not Found")
+        );
+        ColumnEntity columnEntity = columnRepository.findById(columnId).orElseThrow(
+                () -> new EntityNotFoundException("Column Not Found")
+        );
+
+        User author = columnEntity.getColumnAutherId();
+        if(author.getUserId().equals(userId)){
+            return "내가 작성한 칼럼은 좋아요를 누를 수 없습니다.";
+        }
+        if(likeRepository.findByUserAndTargetTypeAndTargetId(user, ScrapTargetType.COLUMN, columnId).isPresent()){
+            Like like = likeRepository.findByUserAndTargetTypeAndTargetId(user, ScrapTargetType.COLUMN, columnId).orElseThrow(
+                    () -> new EntityNotFoundException("Like Not Found")
+            );
+            likeRepository.delete(like);
+            return "좋아요 취소";
+        }
+        Like like = new Like(user, ScrapTargetType.COLUMN, columnId);
+        likeRepository.save(like);
+
+        String message = user.getName() + "님이 내 칼럼에 좋아요를 남겼어요.";
+        notificationService.sendNotification(author.getUserId(), user.getUserId(), NotificationType.COLUMN, columnId, message);
+
+        return "좋아요 완료";
+
+    }
+
+    @Transactional
+    public String scrapColumn(Long userId, Long columnId) {
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new EntityNotFoundException("User Not Found")
+        );
+        ColumnEntity columnEntity = columnRepository.findById(columnId).orElseThrow(
+                () -> new EntityNotFoundException("Column Not Found")
+        );
+
+        User author = columnEntity.getColumnAutherId();
+        if(author.getUserId().equals(userId)){
+            return "내가 작성한 칼럼은 스크랩 할 수 없습니다.";
+        }
+        if(scrapRepository.findByUserAndTargetTypeAndTargetId(user, ScrapTargetType.COLUMN, columnId).isPresent()){
+            Scrap scrap = scrapRepository.findByUserAndTargetTypeAndTargetId(user, ScrapTargetType.COLUMN, columnId).orElseThrow(
+                    () -> new EntityNotFoundException("Scrap Not Found")
+            );
+            scrapRepository.delete(scrap);
+            return "스크랩 취소";
+        }
+        Like like = new Like(user, ScrapTargetType.COLUMN, columnId);
+        likeRepository.save(like);
+
+        return "스크랩 완료";
+
+    }
 }

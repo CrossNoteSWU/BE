@@ -2,10 +2,15 @@ package com.swulion.crossnote.service;
 
 import com.swulion.crossnote.dto.Question.*;
 import com.swulion.crossnote.entity.*;
+import com.swulion.crossnote.entity.Column.ColumnEntity;
+import com.swulion.crossnote.entity.Curation.Like;
+import com.swulion.crossnote.entity.Curation.ScrapTargetType;
 import com.swulion.crossnote.entity.QA.Answer;
 import com.swulion.crossnote.entity.QA.Question;
 import com.swulion.crossnote.entity.QA.QuestionCategory;
 import com.swulion.crossnote.repository.*;
+import com.swulion.crossnote.repository.Curation.LikeRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +31,8 @@ public class QuestionService {
     private final AnswerRepository answerRepository;
     private final QuestionCategoryRepository questionCategoryRepository;
     private final AnswerService answerService;
+    private final LikeRepository likeRepository;
+    private final NotificationService notificationService;
 
     /* 질문 생성 로직 */
     public QuestionResponseDto createQuestion(Long userId, QuestionRequestDto questionRequestDto) {
@@ -192,5 +199,35 @@ public class QuestionService {
         QuestionResponseDto questionResponseDto = new QuestionResponseDto(questionerId.getUserId(), question.getTitle(), question.getContent(),
                 question.getLikeCount(), question.getCreatedAt(), question.getUpdatedAt(), category1, category2, category3);
         return questionResponseDto;
+    }
+
+    @Transactional
+    public String likeQuestion(Long userId, Long questionId) {
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new EntityNotFoundException("User Not Found")
+        );
+        Question question = questionRepository.findById(questionId).orElseThrow(
+                () -> new EntityNotFoundException("Question Not Found")
+        );
+
+        User author = question.getQuestionerId();
+        if(author.getUserId().equals(userId)){
+            return "내가 작성한 QnA에 좋아요를 누를 수 없습니다.";
+        }
+        if(likeRepository.findByUserAndTargetTypeAndTargetId(user, ScrapTargetType.QUESTION, questionId).isPresent()){
+            Like like = likeRepository.findByUserAndTargetTypeAndTargetId(user, ScrapTargetType.QUESTION, questionId).orElseThrow(
+                    () -> new EntityNotFoundException("Like Not Found")
+            );
+            likeRepository.delete(like);
+            return "좋아요 취소";
+        }
+        Like like = new Like(user, ScrapTargetType.COLUMN, questionId);
+        likeRepository.save(like);
+
+        String message = user.getName() + "님이  내 QnA에 좋아요를 남겼어요";
+        notificationService.sendNotification(author.getUserId(), user.getUserId(), NotificationType.QUESTION, questionId, message);
+
+        return "좋아요 완료";
+
     }
 }

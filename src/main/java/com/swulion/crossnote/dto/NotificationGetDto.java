@@ -1,5 +1,6 @@
 package com.swulion.crossnote.dto;
 
+import com.swulion.crossnote.entity.NotificationType;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +14,7 @@ public class NotificationGetDto {
     private String receiverName;
     private String actorName;
     private String message;
-    private String targetType;
+    private NotificationType targetType;
     private Long targetId;
     private boolean isRead;
     private LocalDateTime createdAt;

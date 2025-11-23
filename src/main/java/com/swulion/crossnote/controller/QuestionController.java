@@ -51,5 +51,11 @@ public class QuestionController {
         Long userId = userDetails.getUser().getUserId();
         return ResponseEntity.ok(questionService.deleteQuestion(userId, columnId));
     }
+
+    @PatchMapping("/like/{questionId}")
+    public ResponseEntity<String> likeQuestion(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long questionId) {
+        Long userId = userDetails.getUser().getUserId();
+        return ResponseEntity.ok(questionService.likeQuestion(userId, questionId));
+    }
 }
 

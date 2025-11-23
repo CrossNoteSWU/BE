@@ -29,7 +29,7 @@ public class Notification {
 
     private String notificationType;
 
-    private String targetType;
+    private NotificationType targetType;
     private Long targetId;
 
     private String content;

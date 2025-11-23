@@ -57,5 +57,19 @@ public class ColumnController {
         return ResponseEntity.ok(columnDetailResponseDto);
     }
 
+    /* Column 좋아요 */
+    @PatchMapping("/like/{columnId}")
+    public ResponseEntity<String> likeColumn(@PathVariable Long columnId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getUserId();
+        return ResponseEntity.ok(columnService.likeColumn(columnId, userId));
+    }
+
+    /* Column 스크랩 */
+    @PatchMapping("/scrap/{columnId}")
+    public ResponseEntity<String> scrapColumn(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long columnId) {
+        Long userId = userDetails.getUser().getUserId();
+        return ResponseEntity.ok(columnService.scrapColumn(columnId, userId));
+    }
+
 
 }
