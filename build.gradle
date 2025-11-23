@@ -37,6 +37,13 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
 	/* Redis 사용을 위해 추가 */
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	/* QueryDSL 사용을 위해 추가 */
+	implementation 'com.querydsl:querydsl-jpa:5.1.0:jakarta'
+//	/* XML 처리 위해 추가 */
+//	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+	annotationProcessor "com.querydsl:querydsl-apt:5.1.0:jakarta"
+	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
 
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -59,6 +66,15 @@ dependencies {
 	// Netty 클래스 누락 해결을 위해 명시적으로 추가
 	implementation 'io.netty:netty-handler'
 
+}
+
+// QueryDSL
+sourceSets{
+	main{
+		java{
+			srcDirs = ["src/main/java"]
+		}
+	}
 }
 
 tasks.named('test') {
