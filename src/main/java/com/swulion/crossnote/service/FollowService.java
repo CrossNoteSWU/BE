@@ -6,6 +6,7 @@ import com.swulion.crossnote.dto.Follow.FollowUserSummaryDto;
 import com.swulion.crossnote.entity.Follow;
 import com.swulion.crossnote.entity.User;
 import com.swulion.crossnote.repository.FollowRepository;
+import com.swulion.crossnote.repository.NotificationRepository;
 import com.swulion.crossnote.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,7 @@ public class FollowService {
 
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public FollowStatusResponseDto getFollowStatus(Long currentUserId, Long targetUserId) {
@@ -49,6 +51,10 @@ public class FollowService {
                 .build();
 
         followRepository.save(follow);
+
+        // 팔로우 알림
+        String message = follower.getName() + " 님이 내 질문에 답변을 남겼어요.";
+        notificationService.sendNotification(followee.getUserId(), follower.getUserId(), "Follow", follower.getUserId(), message);
 
         follower.increaseFollowingsCount();
         followee.increaseFollowersCount();

@@ -1,5 +1,6 @@
 package com.swulion.crossnote.controller;
 
+import com.swulion.crossnote.dto.NotificationGetDto;
 import com.swulion.crossnote.entity.Notification;
 import com.swulion.crossnote.service.CustomUserDetails;
 import com.swulion.crossnote.service.NotificationService;
@@ -18,16 +19,16 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping("/me")
-    public ResponseEntity<List<Notification>> getNotificationAll(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<List<NotificationGetDto>> getNotificationAll(@AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUser().getUserId();
-        List<Notification> notifications = notificationService.getNotifications(userId);
+        List<NotificationGetDto> notifications = notificationService.getNotifications(userId);
         return new ResponseEntity<>(notifications, HttpStatus.OK);
     }
 
     @GetMapping("/me/unread")
-    public ResponseEntity<List<Notification>> getNotificationUnread(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<List<NotificationGetDto>> getNotificationUnread(@AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUser().getUserId();
-        List<Notification> notifications = notificationService.getNotifications(userId);
+        List<NotificationGetDto> notifications = notificationService.getUnreadNotifications(userId);
         return new ResponseEntity<>(notifications, HttpStatus.OK);
     }
 

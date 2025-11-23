@@ -1,5 +1,6 @@
 package com.swulion.crossnote.service;
 
+import com.swulion.crossnote.dto.NotificationGetDto;
 import com.swulion.crossnote.entity.Notification;
 import com.swulion.crossnote.entity.User;
 import com.swulion.crossnote.repository.NotificationRepository;
@@ -12,6 +13,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -39,6 +41,7 @@ public class NotificationService {
 
     };
 
+    @Transactional
     public void sendNotification(Long receiverId, Long actorId,
                                  String targetType, Long TargetId, String message) {
         User receiver = userRepository.findById(receiverId).orElseThrow(
@@ -55,8 +58,9 @@ public class NotificationService {
         notification.setTargetType(targetType);
         notification.setTargetId(TargetId);
         notification.setActor(actor);
+        notificationRepository.save(notification);
 
-        SseEmitter emitter = subscribe(receiver.getUserId());
+        SseEmitter emitter = sseEmitterRepository.get(receiverId);
         if (emitter == null) return;
 
         try{
@@ -69,11 +73,27 @@ public class NotificationService {
     }
 
     // 나에게 온 알림 전체 보기
-    public List<Notification> getNotifications(Long userId) {
+    public List<NotificationGetDto> getNotifications(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(
                 ()->new RuntimeException("User not found")
         );
-        return notificationRepository.findAllByReceiverOrderByCreatedAtDesc(user);
+
+        List <Notification> notifications = notificationRepository.findAllByReceiverOrderByCreatedAtDesc(user);
+        List<NotificationGetDto> dtos = new ArrayList<>();
+        for (Notification notification : notifications) {
+            NotificationGetDto notificationGetDto = new NotificationGetDto();
+            notificationGetDto.setNotificationId(notification.getNotificationId());
+            notificationGetDto.setReceiverName(notification.getReceiver().getName());
+            notificationGetDto.setActorName(notification.getActor().getName());
+            notificationGetDto.setMessage(notification.getContent());
+            notificationGetDto.setRead(notification.isRead());
+            notificationGetDto.setTargetType(notification.getTargetType());
+            notificationGetDto.setTargetId(notification.getTargetId());
+            notificationGetDto.setCreatedAt(notification.getCreatedAt());
+            dtos.add(notificationGetDto);
+        }
+
+        return dtos;
     }
 
     // 안 읽은 알림 개수 보기
@@ -85,11 +105,27 @@ public class NotificationService {
     }
 
     // 안 읽은 알림만 보기
-    public List<Notification> getUnreadNotifications(Long userId) {
+    @Transactional
+    public List<NotificationGetDto> getUnreadNotifications(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(
                 ()->new RuntimeException("User not found")
         );
-        return notificationRepository.findAllByReceiverAndIsReadFalse(user);
+        List <Notification> notifications = notificationRepository.findAllByReceiverAndIsReadFalse(user);
+        List<NotificationGetDto> dtos = new ArrayList<>();
+        for (Notification notification : notifications) {
+            NotificationGetDto notificationGetDto = new NotificationGetDto();
+            notificationGetDto.setNotificationId(notification.getNotificationId());
+            notificationGetDto.setReceiverName(notification.getReceiver().getName());
+            notificationGetDto.setActorName(notification.getActor().getName());
+            notificationGetDto.setMessage(notification.getContent());
+            notificationGetDto.setRead(notification.isRead());
+            notificationGetDto.setTargetType(notification.getTargetType());
+            notificationGetDto.setTargetId(notification.getTargetId());
+            notificationGetDto.setCreatedAt(notification.getCreatedAt());
+            dtos.add(notificationGetDto);
+        }
+
+        return dtos;
     }
     // 알림 개별 읽음 처리
     public void readNotification(Long userId, Long notificationId) {
