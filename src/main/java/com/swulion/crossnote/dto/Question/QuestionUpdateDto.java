@@ -4,9 +4,9 @@ import jakarta.persistence.Column;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
-@Setter
-public class QuestionRequestDto {
+@Getter @Setter
+public class QuestionUpdateDto {
+    private Long questionId;
     private String title;
     private String content;
     @Column(nullable = false)
