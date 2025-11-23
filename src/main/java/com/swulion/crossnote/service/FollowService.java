@@ -53,7 +53,7 @@ public class FollowService {
         followRepository.save(follow);
 
         // 팔로우 알림
-        String message = follower.getName() + " 님이 내 질문에 답변을 남겼어요.";
+        String message = follower.getName() + " 님이 나를 팔로우했어요.";
         notificationService.sendNotification(followee.getUserId(), follower.getUserId(), "Follow", follower.getUserId(), message);
 
         follower.increaseFollowingsCount();
