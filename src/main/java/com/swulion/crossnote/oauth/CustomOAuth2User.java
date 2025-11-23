@@ -46,9 +46,9 @@ public class CustomOAuth2User implements OAuth2UserService<OAuth2UserRequest, OA
             OAuthAttributes oAuthAttributes = OAuthAttributes.of(registrationId, userNameAttributeName, attributes);
             log.info("소셜 유저 정보 파싱 완료. (Email: {})", oAuthAttributes.getEmail());
 
-            if (oAuthAttributes.getEmail() != null) {
+            if (oAuthAttributes.getEmail() == null) {
                 throw new OAuth2AuthenticationException(new OAuth2Error("EMAIL_NOT_PROVIDED",
-                        "소셜 로그인 이메일 저보가 없습니다.", null));
+                        "소셜 로그인 이메일 정보가 없습니다.", null));
             }
 
             // 4. 신규 유저 여부 판단 및 DB에 유저 저장 또는 업데이트
