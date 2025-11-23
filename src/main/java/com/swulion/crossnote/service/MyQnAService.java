@@ -32,7 +32,7 @@ public class MyQnAService {
         } else if ("answer".equals(type)) {
             // 본인이 답변한 질문들만 조회
             List<Answer> myAnswers = answerRepository.findAll().stream()
-                    .filter(a -> a.getAnswererId() != null && a.getAnswererId().getUserId().equals(userId))
+                    .filter(a -> a.getAnswererID() != null && a.getAnswererID().getUserId().equals(userId))
                     .collect(Collectors.toList());
             
             Set<Long> questionIds = myAnswers.stream()
@@ -49,7 +49,7 @@ public class MyQnAService {
             
             // 본인이 답변한 질문
             List<Answer> myAnswers = answerRepository.findAll().stream()
-                    .filter(a -> a.getAnswererId() != null && a.getAnswererId().getUserId().equals(userId))
+                    .filter(a -> a.getAnswererID() != null && a.getAnswererID().getUserId().equals(userId))
                     .collect(Collectors.toList());
             
             Set<Long> answeredQuestionIds = myAnswers.stream()
@@ -73,7 +73,7 @@ public class MyQnAService {
                                     answer.getAnswerId(),
                                     answer.getContent(),
                                     answer.getCreatedAt(),
-                                    answer.getAnswererId() != null ? answer.getAnswererId().getUserId() : null
+                                    answer.getAnswererID() != null ? answer.getAnswererID().getUserId() : null
                             ))
                             .collect(Collectors.toList());
 

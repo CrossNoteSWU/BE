@@ -23,7 +23,7 @@ public class Answer {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId")
-    private User answererId; // 답변 작성자
+    private User answererID; // 답변자
 
     private String content;
 
