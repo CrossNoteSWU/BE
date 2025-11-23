@@ -25,6 +25,7 @@ public class AnswerService {
     private final QuestionRepository questionRepository;
     private final AnswerRepository answerRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public AnswerResponseDto createAnswer(Long userId, AnswerCreateDto answerCreateDto) {
         User user = userRepository.findById(userId).orElseThrow(
@@ -44,6 +45,13 @@ public class AnswerService {
         question.setAnswerCount(question.getAnswerCount() + 1);
         questionRepository.save(question);
 
+        Long questionUserId = question.getQuestionerId().getUserId();
+        if(!user.getUserId().equals(questionUserId)) {
+            String message = user.getName() + " 님이 내 질문에 답변을 남겼어요.";
+            notificationService.sendNotification(questionUserId, userId, "QnA", question.getQuestionId(), message);
+        }
+
+
         AnswerResponseDto answerResponseDto = new AnswerResponseDto();
         answerResponseDto.setAnswerer(user.getName());
         answerResponseDto.setAnswerId(answer.getAnswerId());
@@ -54,7 +62,10 @@ public class AnswerService {
     }
 
     public List<AnswerResponseDto> getAnswers(Long questionId) {
-        List<Answer> answers = answerRepository.findAllByQuestionId(questionId);
+        Question question = questionRepository.findById(questionId).orElseThrow(
+                () -> new RuntimeException("Question not found")
+        );
+        List<Answer> answers = answerRepository.findAllByQuestionId(question);
         List<AnswerResponseDto> answerResponseDtos = new ArrayList<>();
         if (answers.isEmpty()) {
             return answerResponseDtos;
@@ -111,7 +122,6 @@ public class AnswerService {
         answerRepository.delete(answer);
         Question question = answer.getQuestionId();
         question.setAnswerCount(question.getAnswerCount() - 1);
-        answerRepository.save(answer);
         return "Answer 삭제 완료";
 
     }

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -55,13 +56,13 @@ public class QuestionService {
 
     /* Question 전체 보기 (홈) */
     public List<QuestionListDto> getQnaHome(String sort){
+        List<Question> questions = questionRepository.findAllByOrderByCreatedAtDesc();
         if(sort.equals("popular")){
-            List<Question> questions = questionRepository.findAllByOrderByLikeCountDesc();
+            questions = questionRepository.findAllByOrderByLikeCountDesc();
         }
         else if(sort.equals("comment")){
-            List<Question> questions = questionRepository.findAllByOrderByAnswerCountDesc();
+            questions = questionRepository.findAllByOrderByAnswerCountDesc();
         }
-        List<Question> questions = questionRepository.findAllByOrderByCreatedAtDesc();
         List<QuestionListDto> questionListDtos = new ArrayList<>();
         for (Question question : questions) {
             List<Answer> answers = answerRepository.findByQuestionId(question);
@@ -94,16 +95,19 @@ public class QuestionService {
         if (questionUpdateDto.getCategory2() != null) questionCategoriesInDto.add(questionCategoryRepository.findById(questionUpdateDto.getCategory2()).orElse(null));
         if (questionUpdateDto.getCategory3() != null) questionCategoriesInDto.add(questionCategoryRepository.findById(questionUpdateDto.getCategory3()).orElse(null));
 
-        List<QuestionCategory> questionCategories = questionCategoryRepository.findAllByQuestionId(questionUpdateDto.getQuestionId());
+        List<QuestionCategory> questionCategories = questionCategoryRepository.findAllByQuestionId(question);
         QuestionResponseDto questionResponseDto = getQuestionResponseDto(questionCategories, questionerId, question);
 
         List<Long> dtoCatIds = questionCategoriesInDto.stream()
+                .filter(Objects::nonNull)   // null 제거
                 .map(qc -> qc.getCategoryId().getCategoryId())
                 .toList();
 
         List<Long> dbCatIds = questionCategories.stream()
+                .filter(Objects::nonNull)
                 .map(qc -> qc.getCategoryId().getCategoryId())
                 .toList();
+
 
         if (dtoCatIds.equals(dbCatIds)) {
             return questionResponseDto;
@@ -154,7 +158,7 @@ public class QuestionService {
         if(!user.equals(questionUser)) {
             throw new RuntimeException("작성자만 삭제할 수 있습니다.");
         }
-
+        questionCategoryRepository.deleteAllByQuestionId(question);
         questionRepository.delete(question);
         return "Question 삭제 완료";
     }
@@ -168,7 +172,7 @@ public class QuestionService {
         );
         User questionerId = question.getQuestionerId();
 
-        List<QuestionCategory> questionCategories = questionCategoryRepository.findAllByQuestionId(question.getQuestionId());
+        List<QuestionCategory> questionCategories = questionCategoryRepository.findAllByQuestionId(question);
         QuestionResponseDto questionResponseDto = getQuestionResponseDto(questionCategories, questionerId, question);
 
         List<AnswerResponseDto> answerResponseDtos = answerService.getAnswers(question.getQuestionId());

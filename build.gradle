@@ -59,6 +59,12 @@ dependencies {
 	// Netty 클래스 누락 해결을 위해 명시적으로 추가
 	implementation 'io.netty:netty-handler'
 
+	// 웹소켓
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+	implementation 'org.springframework.boot:spring-boot-devtools'
+	annotationProcessor 'org.projectlombok:lombok'
+
 }
 
 tasks.named('test') {

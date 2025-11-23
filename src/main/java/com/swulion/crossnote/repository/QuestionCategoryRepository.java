@@ -1,5 +1,6 @@
 package com.swulion.crossnote.repository;
 
+import com.swulion.crossnote.entity.QA.Question;
 import com.swulion.crossnote.entity.QA.QuestionCategory;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,10 +13,12 @@ import java.util.List;
 
 @Repository
 public interface QuestionCategoryRepository extends JpaRepository<QuestionCategory, Long> {
-    List<QuestionCategory> findAllByQuestionId(Long questionId);
+    List<QuestionCategory> findAllByQuestionId(Question questionId);
 
     @Modifying
     @Transactional
-    @Query("DELETE FROM QuestionCategory qc WHERE qc.question_id.id = :questionId")
+    @Query("DELETE FROM QuestionCategory qc WHERE qc.questionId.questionId = :questionId")
     void deleteByQuestionId(@Param("questionId") Long questionId);
+
+    void deleteAllByQuestionId(Question questionId);
 }

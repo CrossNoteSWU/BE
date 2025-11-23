@@ -23,6 +23,7 @@ public class ColumnCommentService {
     private final ColumnCommentRepository columnCommentRepository;
     private final ColumnRepository columnRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public ColumnCommentResponseDto createColumnComment(Long userId, ColumnCommentCreateDto columnCommentCreateDto) {
         User user = userRepository.findById(userId).orElseThrow(
@@ -40,6 +41,9 @@ public class ColumnCommentService {
         columnCommentRepository.save(columnComment);
 
         column.setCommentCount(column.getCommentCount() + 1);
+        Long columnWriterId = column.getColumnAutherId().getUserId();
+        String message = user.getName() + " 님이 내 칼럼에 댓글을 남겼어요.";
+        notificationService.sendNotification(columnWriterId, userId, "Column", column.getColumnId(), message);
 
         ColumnCommentResponseDto columnCommentResponseDto = new ColumnCommentResponseDto();
         columnCommentResponseDto.setColumnCommentId(columnComment.getCommentId());

@@ -27,9 +27,9 @@ public class Question {
     @Column(length = 1000)
     private String content;
 
-    private Integer likeCount;
+    private Integer likeCount = 0;
 
-    private Integer answerCount;
+    private Integer answerCount = 0;
 
 //    private boolean isTodayQna;
 

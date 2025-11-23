@@ -247,4 +247,15 @@ public class ColumnService {
 
         return categories;
     }
+
+//    public String likeColumn(Long userId, Long columnId) {
+//        User user = userRepository.findById(userId).orElseThrow(
+//                () -> new EntityNotFoundException("User Not Found")
+//        );
+//        ColumnEntity columnEntity = columnRepository.findById(columnId).orElseThrow(
+//                () -> new EntityNotFoundException("Column Not Found")
+//        );
+//
+//
+//    }
 }
