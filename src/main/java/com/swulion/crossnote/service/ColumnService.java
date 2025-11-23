@@ -1,16 +1,12 @@
 package com.swulion.crossnote.service;
 
-import com.swulion.crossnote.dto.Column.ColumnReadResponseDto;
-import com.swulion.crossnote.dto.Column.ColumnRequestDto;
-import com.swulion.crossnote.dto.Column.ColumnDetailResponseDto;
+import com.swulion.crossnote.dto.Column.*;
 import com.swulion.crossnote.entity.Category;
 import com.swulion.crossnote.entity.Column.ColumnCategory;
+import com.swulion.crossnote.entity.Column.ColumnComment;
 import com.swulion.crossnote.entity.Column.ColumnEntity;
 import com.swulion.crossnote.entity.User;
-import com.swulion.crossnote.repository.CategoryRepository;
-import com.swulion.crossnote.repository.ColumnCategoryRepository;
-import com.swulion.crossnote.repository.ColumnRepository;
-import com.swulion.crossnote.repository.UserRepository;
+import com.swulion.crossnote.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +24,7 @@ public class ColumnService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final ColumnCategoryRepository columnCategoryRepository;
+    private final ColumnCommentRepository columnCommentRepository;
 
 
     /* 칼럼 생성 */
@@ -162,11 +159,12 @@ public class ColumnService {
 
     }
 
-    public ColumnDetailResponseDto getColumn(Long columnId) {
+    /* 칼럼 상세 보기 */
+    public ColumnDetailGetDto getColumn(Long columnId) {
         ColumnEntity columnEntity = columnRepository.findById(columnId).orElse(null);
         if (columnEntity == null){
             throw new EntityNotFoundException("Column Not Found");
-        }else {
+        }
             List<ColumnCategory> columnCategories = columnCategoryRepository.findByColumnId(columnEntity);
             List<Long> categories = new ArrayList<>();
             for (ColumnCategory columnCategory : columnCategories) {
@@ -177,7 +175,7 @@ public class ColumnService {
             Long cat2 = categories.size() > 1 ? categories.get(1) : null;
             Long cat3 = categories.size() > 2 ? categories.get(2) : null;
 
-            return new ColumnDetailResponseDto(
+            ColumnDetailResponseDto columnDetailResponseDto = new ColumnDetailResponseDto(
                     columnEntity.getColumnAutherId().getUserId(),
                     columnEntity.getTitle(),
                     columnEntity.getContent(),
@@ -191,7 +189,21 @@ public class ColumnService {
                     cat2,
                     cat3
             );
+
+        List<ColumnComment> columnComments = columnCommentRepository.findAllByColumnId(columnEntity);
+        List<ColumnCommentGetDto> columnCommentGetDtos = new ArrayList<>();
+        for (ColumnComment columnComment : columnComments) {
+            ColumnCommentGetDto columnCommentGetDto = new ColumnCommentGetDto();
+            columnCommentGetDto.setUserId(columnComment.getUserId().getUserId());
+            columnCommentGetDto.setComment(columnComment.getComment());
+            columnCommentGetDto.setCreatedAt(columnComment.getCreatedAt());
+            columnCommentGetDto.setUpdatedAt(columnComment.getUpdatedAt());
+            columnCommentGetDtos.add(columnCommentGetDto);
         }
+        ColumnDetailGetDto columnDetailGetDto = new ColumnDetailGetDto();
+        columnDetailGetDto.setColumnDetailResponseDto(columnDetailResponseDto);
+        columnDetailGetDto.setColumnCommentGetDtos(columnCommentGetDtos);
+        return columnDetailGetDto;
 
     }
 
