@@ -27,6 +27,7 @@ public class Answer {
     private User answererID;
 
     private String content;
+    private Integer likeCount;
 
     private LocalDateTime createdAt;
 

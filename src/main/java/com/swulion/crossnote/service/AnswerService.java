@@ -151,10 +151,15 @@ public class AnswerService {
                     () -> new EntityNotFoundException("Like Not Found")
             );
             likeRepository.delete(like);
+            answer.setLikeCount(answer.getLikeCount() - 1);
+            answerRepository.save(answer);
             return "좋아요 취소";
         }
         Like like = new Like(user, ScrapTargetType.ANSWER, answerId);
         likeRepository.save(like);
+
+        answer.setLikeCount(answer.getLikeCount() + 1);
+        answerRepository.save(answer);
 
         String message = user.getName() + "님이 내가 남긴 답글에 좋아요를 남겼어요.";
         notificationService.sendNotification(author.getUserId(), user.getUserId(), NotificationType.ANSWER, answerId, message);

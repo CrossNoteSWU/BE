@@ -219,10 +219,14 @@ public class QuestionService {
                     () -> new EntityNotFoundException("Like Not Found")
             );
             likeRepository.delete(like);
+            question.setLikeCount(question.getLikeCount() - 1);
+            questionRepository.save(question);
             return "좋아요 취소";
         }
         Like like = new Like(user, ScrapTargetType.COLUMN, questionId);
         likeRepository.save(like);
+        question.setLikeCount(question.getLikeCount() + 1);
+        questionRepository.save(question);
 
         String message = user.getName() + "님이  내 QnA에 좋아요를 남겼어요";
         notificationService.sendNotification(author.getUserId(), user.getUserId(), NotificationType.QUESTION, questionId, message);

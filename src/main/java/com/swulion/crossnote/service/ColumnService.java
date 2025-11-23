@@ -275,10 +275,15 @@ public class ColumnService {
                     () -> new EntityNotFoundException("Like Not Found")
             );
             likeRepository.delete(like);
+            columnEntity.setLikeCount(columnEntity.getLikeCount() - 1);
+            columnRepository.save(columnEntity);
             return "좋아요 취소";
         }
         Like like = new Like(user, ScrapTargetType.COLUMN, columnId);
         likeRepository.save(like);
+
+        columnEntity.setLikeCount(columnEntity.getLikeCount() + 1);
+        columnRepository.save(columnEntity);
 
         String message = user.getName() + "님이 내 칼럼에 좋아요를 남겼어요.";
         notificationService.sendNotification(author.getUserId(), user.getUserId(), NotificationType.COLUMN, columnId, message);
@@ -305,10 +310,15 @@ public class ColumnService {
                     () -> new EntityNotFoundException("Scrap Not Found")
             );
             scrapRepository.delete(scrap);
+            columnEntity.setScrapCount(columnEntity.getScrapCount() - 1);
+            columnRepository.save(columnEntity);
             return "스크랩 취소";
         }
         Like like = new Like(user, ScrapTargetType.COLUMN, columnId);
         likeRepository.save(like);
+
+        columnEntity.setScrapCount(columnEntity.getScrapCount() + 1);
+        columnRepository.save(columnEntity);
 
         return "스크랩 완료";
 
