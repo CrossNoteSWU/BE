@@ -288,7 +288,7 @@ public class ColumnService {
         likeRepository.save(like);
 
         columnEntity.setLikeCount(columnEntity.getLikeCount() + 1);
-       if(columnEntity.getLikeCount() >= 10 && columnEntity.getCommentCount() >= 10){
+       if(columnEntity.getLikeCount() >= 10 && columnEntity.getScrapCount() >= 10){
             columnEntity.setBestColumn(true);
         }
         columnRepository.save(columnEntity);
@@ -326,6 +326,9 @@ public class ColumnService {
         likeRepository.save(like);
 
         columnEntity.setScrapCount(columnEntity.getScrapCount() + 1);
+        if(columnEntity.getLikeCount() >= 10 && columnEntity.getScrapCount() >= 10){
+            columnEntity.setBestColumn(true);
+        }
         columnRepository.save(columnEntity);
 
         return "스크랩 완료";

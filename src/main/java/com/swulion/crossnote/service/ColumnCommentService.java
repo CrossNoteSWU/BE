@@ -97,9 +97,6 @@ public class ColumnCommentService {
         columnCommentRepository.delete(columnComment);
         ColumnEntity column = columnComment.getColumnId();
         column.setCommentCount(column.getCommentCount() - 1);
-        if(column.getLikeCount() < 10 && column.getCommentCount() < 10){
-            column.setBestColumn(true);
-        }
         columnRepository.save(column);
 
         return "삭제 완료";
