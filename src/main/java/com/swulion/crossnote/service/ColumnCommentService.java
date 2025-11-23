@@ -42,6 +42,10 @@ public class ColumnCommentService {
         columnCommentRepository.save(columnComment);
 
         column.setCommentCount(column.getCommentCount() + 1);
+        if(column.getLikeCount() >= 10 && column.getCommentCount() >= 10){
+            column.setBestColumn(true);
+        }
+        columnRepository.save(column);
         Long columnWriterId = column.getColumnAutherId().getUserId();
         String message = user.getName() + "님이 내 칼럼에 댓글을 남겼어요.";
         notificationService.sendNotification(columnWriterId, userId, NotificationType.COLUMN, column.getColumnId(), message);
@@ -93,6 +97,9 @@ public class ColumnCommentService {
         columnCommentRepository.delete(columnComment);
         ColumnEntity column = columnComment.getColumnId();
         column.setCommentCount(column.getCommentCount() - 1);
+        if(column.getLikeCount() < 10 && column.getCommentCount() < 10){
+            column.setBestColumn(true);
+        }
         columnRepository.save(column);
 
         return "삭제 완료";

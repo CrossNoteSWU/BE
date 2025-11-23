@@ -81,7 +81,7 @@ public class NotificationService {
                 ()->new RuntimeException("User not found")
         );
 
-        List <Notification> notifications = notificationRepository.findAllByReceiverOrderByCreatedAtDesc(user);
+        List <Notification> notifications = notificationRepository.findTop20ByReceiverOrderByCreatedAtDesc(user);
         List<NotificationGetDto> dtos = new ArrayList<>();
         for (Notification notification : notifications) {
             NotificationGetDto notificationGetDto = new NotificationGetDto();

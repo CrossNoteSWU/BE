@@ -276,6 +276,9 @@ public class ColumnService {
             );
             likeRepository.delete(like);
             columnEntity.setLikeCount(columnEntity.getLikeCount() - 1);
+            if(columnEntity.getLikeCount() < 10 && columnEntity.getCommentCount() < 10){
+                columnEntity.setBestColumn(true);
+            }
             columnRepository.save(columnEntity);
             return "좋아요 취소";
         }
@@ -283,6 +286,9 @@ public class ColumnService {
         likeRepository.save(like);
 
         columnEntity.setLikeCount(columnEntity.getLikeCount() + 1);
+       if(columnEntity.getLikeCount() >= 10 && columnEntity.getCommentCount() >= 10){
+            columnEntity.setBestColumn(true);
+        }
         columnRepository.save(columnEntity);
 
         String message = user.getName() + "님이 내 칼럼에 좋아요를 남겼어요.";
