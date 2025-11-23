@@ -29,8 +29,8 @@ public class QuestionController {
 
     /* QNA 홈 */
     @GetMapping("/home")
-    public ResponseEntity<List<QuestionListDto>> getQuestionHome(){
-        List<QuestionListDto> questionListDtos = questionService.getQnaHome();
+    public ResponseEntity<List<QuestionListDto>> getQuestionHome(@RequestParam String sort) {
+        List<QuestionListDto> questionListDtos = questionService.getQnaHome(sort);
         return ResponseEntity.ok(questionListDtos);
     }
 }

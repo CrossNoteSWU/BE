@@ -53,8 +53,14 @@ public class QuestionService {
     }
 
     /* Question 전체 보기 (홈) */
-    public List<QuestionListDto> getQnaHome(){
-        List<Question> questions = questionRepository.findAll();
+    public List<QuestionListDto> getQnaHome(String sort){
+        if(sort.equals("popular")){
+            List<Question> questions = questionRepository.findAllByOrderByLikeCountDesc();
+        }
+        else if(sort.equals("comment")){
+            List<Question> questions = questionRepository.findAllByOrderByAnswerCountDesc();
+        }
+        List<Question> questions = questionRepository.findAllByOrderByCreatedAtDesc();
         List<QuestionListDto> questionListDtos = new ArrayList<>();
         for (Question question : questions) {
             List<Answer> answers = answerRepository.findByQuestionId(question);

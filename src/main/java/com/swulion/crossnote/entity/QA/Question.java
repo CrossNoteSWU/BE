@@ -29,6 +29,8 @@ public class Question {
 
     private Integer likeCount;
 
+    private Integer answerCount;
+
 //    private boolean isTodayQna;
 
     private LocalDateTime createdAt;

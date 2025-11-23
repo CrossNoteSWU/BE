@@ -41,6 +41,9 @@ public class AnswerService {
         answer.setCreatedAt(LocalDateTime.now());
         answerRepository.save(answer);
 
+        question.setAnswerCount(question.getAnswerCount() + 1);
+        questionRepository.save(question);
+
         AnswerResponseDto answerResponseDto = new AnswerResponseDto();
         answerResponseDto.setAnswerer(user.getName());
         answerResponseDto.setAnswerId(answer.getAnswerId());
@@ -106,6 +109,9 @@ public class AnswerService {
             throw new RuntimeException("작성자만 삭제할 수 있습니다.");
         }
         answerRepository.delete(answer);
+        Question question = answer.getQuestionId();
+        question.setAnswerCount(question.getAnswerCount() - 1);
+        answerRepository.save(answer);
         return "Answer 삭제 완료";
 
     }

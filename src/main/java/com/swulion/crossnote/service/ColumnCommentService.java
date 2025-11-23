@@ -39,6 +39,8 @@ public class ColumnCommentService {
         columnComment.setCreatedAt(LocalDateTime.now());
         columnCommentRepository.save(columnComment);
 
+        column.setCommentCount(column.getCommentCount() + 1);
+
         ColumnCommentResponseDto columnCommentResponseDto = new ColumnCommentResponseDto();
         columnCommentResponseDto.setColumnCommentId(columnComment.getCommentId());
         columnCommentResponseDto.setUserId(userId);
@@ -84,6 +86,10 @@ public class ColumnCommentService {
             throw new RuntimeException("댓글 작성자 본인만 삭제할 수 있습니다.");
         }
         columnCommentRepository.delete(columnComment);
+        ColumnEntity column = columnComment.getColumnId();
+        column.setCommentCount(column.getCommentCount() - 1);
+        columnRepository.save(column);
+
         return "삭제 완료";
     }
 
