@@ -27,7 +27,7 @@ public class Answer {
     private User answererID;
 
     private String content;
-    private Integer likeCount;
+    private Integer likeCount = 0;
 
     private LocalDateTime createdAt;
 

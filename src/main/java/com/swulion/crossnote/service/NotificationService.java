@@ -104,7 +104,12 @@ public class NotificationService {
         User user = userRepository.findById(userId).orElseThrow(
                 ()->new RuntimeException("User not found")
         );
-        return notificationRepository.findAllByReceiverAndIsReadFalse(user).size();
+        List<Notification> notifications = notificationRepository.findTop20ByReceiverOrderByCreatedAtDesc(user);
+        int count = 0;
+        for (Notification notification : notifications) {
+            if (!notification.isRead()) count += 1;
+        }
+        return count;
     }
 
     // 안 읽은 알림만 보기

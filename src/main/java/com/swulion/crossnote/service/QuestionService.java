@@ -22,7 +22,6 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class QuestionService {
 
     private final QuestionRepository questionRepository;
@@ -35,6 +34,7 @@ public class QuestionService {
     private final NotificationService notificationService;
 
     /* 질문 생성 로직 */
+    @Transactional
     public QuestionResponseDto createQuestion(Long userId, QuestionRequestDto questionRequestDto) {
         Question question = new Question();
         question.setCreatedAt(LocalDateTime.now());
@@ -86,6 +86,7 @@ public class QuestionService {
         return questionListDtos;
     }
 
+    @Transactional
     public QuestionResponseDto updateQuestion(Long userId, QuestionUpdateDto questionUpdateDto) {
         User questionerId = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User Not Found"));
@@ -153,6 +154,7 @@ public class QuestionService {
         return categories;
     }
 
+    @Transactional
     public String deleteQuestion(Long userId, Long questionId) {
         Question question = questionRepository.findById(questionId).orElseThrow(
                 () -> new RuntimeException("Question Not Found")
@@ -223,7 +225,7 @@ public class QuestionService {
             questionRepository.save(question);
             return "좋아요 취소";
         }
-        Like like = new Like(user, ScrapTargetType.COLUMN, questionId);
+        Like like = new Like(user, ScrapTargetType.QUESTION, questionId);
         likeRepository.save(like);
         question.setLikeCount(question.getLikeCount() + 1);
         questionRepository.save(question);

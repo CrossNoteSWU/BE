@@ -24,7 +24,6 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ColumnService {
     private final ColumnRepository columnRepository;
     private final UserRepository userRepository;
@@ -37,6 +36,7 @@ public class ColumnService {
 
 
     /* 칼럼 생성 */
+    @Transactional
     public ColumnDetailResponseDto createColumn(ColumnRequestDto columnRequestDto, Long loginUserId) {
 
         User user = userRepository.findById(loginUserId)
@@ -77,6 +77,7 @@ public class ColumnService {
     }
 
     /* 칼럼 삭제 */
+    @Transactional
     public Integer deleteColumn(Long columnId) {
         ColumnEntity columnEntity = columnRepository.findById(columnId).orElse(null);
 
@@ -92,6 +93,7 @@ public class ColumnService {
     }
 
     /* 칼럼 수정 */
+    @Transactional
     public ColumnDetailResponseDto updateColumn(Long columnId, ColumnRequestDto columnRequestDto, Long loginUserId) {
 
         User user = userRepository.findById(loginUserId)

@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class AnswerService {
     private final QuestionRepository questionRepository;
@@ -34,6 +33,7 @@ public class AnswerService {
     private final NotificationService notificationService;
     private final LikeRepository likeRepository;
 
+    @Transactional
     public AnswerResponseDto createAnswer(Long userId, AnswerCreateDto answerCreateDto) {
         User user = userRepository.findById(userId).orElseThrow(
                 () -> new RuntimeException("User not found")
@@ -89,6 +89,7 @@ public class AnswerService {
         }
     }
 
+    @Transactional
     public AnswerResponseDto updateAnswer(Long userId, AnswerUpdateDto answerUpdateDto) {
         User user = userRepository.findById(userId).orElseThrow(
                 () -> new RuntimeException("User not found")
@@ -113,6 +114,7 @@ public class AnswerService {
         return answerResponseDto;
     }
 
+    @Transactional
     public String deleteAnswer(Long userId, Long answerId) {
         User user = userRepository.findById(userId).orElseThrow(
                 () -> new RuntimeException("User not found")
@@ -144,7 +146,7 @@ public class AnswerService {
 
         User author = answer.getAnswererID();
         if(author.getUserId().equals(userId)){
-            return "내가 작성한 칼럼은 좋아요를 누를 수 없습니다.";
+            return "내가 작성한 답변에 좋아요를 누를 수 없습니다.";
         }
         if(likeRepository.findByUserAndTargetTypeAndTargetId(user, ScrapTargetType.ANSWER, answerId).isPresent()){
             Like like = likeRepository.findByUserAndTargetTypeAndTargetId(user, ScrapTargetType.ANSWER, answerId).orElseThrow(
