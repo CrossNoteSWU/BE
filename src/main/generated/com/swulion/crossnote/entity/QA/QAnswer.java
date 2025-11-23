@@ -22,6 +22,8 @@ public class QAnswer extends EntityPathBase<Answer> {
 
     public static final QAnswer answer = new QAnswer("answer");
 
+    public final com.swulion.crossnote.entity.QUser answererId;
+
     public final NumberPath<Long> answerId = createNumber("answerId", Long.class);
 
     public final StringPath content = createString("content");
@@ -50,6 +52,7 @@ public class QAnswer extends EntityPathBase<Answer> {
 
     public QAnswer(Class<? extends Answer> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
+        this.answererId = inits.isInitialized("answererId") ? new com.swulion.crossnote.entity.QUser(forProperty("answererId")) : null;
         this.questionId = inits.isInitialized("questionId") ? new QQuestion(forProperty("questionId"), inits.get("questionId")) : null;
     }
 

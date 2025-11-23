@@ -5,6 +5,7 @@ import com.swulion.crossnote.entity.Curation.ScrapTargetType;
 import com.swulion.crossnote.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ScrapRepository extends JpaRepository<Scrap, Long> {
@@ -13,4 +14,7 @@ public interface ScrapRepository extends JpaRepository<Scrap, Long> {
 
     // 스크랩 토글
     Optional<Scrap> findByUserAndTargetTypeAndTargetId(User user, ScrapTargetType targetType, Long targetId);
+    
+    // 사용자의 모든 큐레이션 스크랩 조회
+    List<Scrap> findByUserAndTargetTypeOrderByCreatedAtDesc(User user, ScrapTargetType targetType);
 }

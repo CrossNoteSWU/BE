@@ -1,5 +1,6 @@
 package com.swulion.crossnote.entity.QA;
 
+import com.swulion.crossnote.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,10 @@ public class Answer {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "questionId")
     private Question questionId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "userId")
+    private User answererId; // 답변 작성자
 
     private String content;
 
