@@ -21,5 +21,8 @@ public interface ColumnRepository extends JpaRepository<ColumnEntity, Long> {
     //인기순
     List<ColumnEntity> findAllByOrderByLikeCountDesc();
 
+    // 베스트 칼럼 선정 기준
+    List<ColumnEntity> findByLikeCountGreaterThanEqualAndScrapCountGreaterThanEqual(int minLikeCount, int minScrapCount);
+
     Page<ColumnEntity> findByColumnAutherIdOrderByCreatedAtDesc(User author, Pageable pageable);
 }

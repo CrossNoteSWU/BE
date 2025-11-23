@@ -1,5 +1,6 @@
 package com.swulion.crossnote.oauth;
 
+import com.swulion.crossnote.entity.Curation.CurationLevel;
 import com.swulion.crossnote.entity.LoginType;
 import com.swulion.crossnote.entity.User;
 import lombok.Builder;
@@ -123,7 +124,7 @@ public class OAuthAttributes {
                 .profileImageUrl(profileImageUrl)
                 .birthDate(birthDate) // 생년월일 추가
                 .loginType(loginType) // KAKAO 또는 GOOGLE
-                .curationLevel(null)
+                .curationLevel(CurationLevel.LEVEL_1) // 큐레이션 레벨
                 // 소셜 로그인은 password가 필요 없으므로 null
                 .build();
     }
