@@ -24,6 +24,7 @@ public class QuestionService {
     private final CategoryRepository categoryRepository;
     private final AnswerRepository answerRepository;
     private final QuestionCategoryRepository questionCategoryRepository;
+    private final AnswerService answerService;
 
     /* 질문 생성 로직 */
     public QuestionResponseDto createQuestion(Long userId, QuestionRequestDto questionRequestDto) {
@@ -170,17 +171,7 @@ public class QuestionService {
         List<QuestionCategory> questionCategories = questionCategoryRepository.findAllByQuestionId(question.getQuestionId());
         QuestionResponseDto questionResponseDto = getQuestionResponseDto(questionCategories, questionerId, question);
 
-        List<AnswerResponseDto> answerResponseDtos = new ArrayList<>();
-        List<Answer> answers = answerRepository.findAllByQuestionId(question.getQuestionId());
-        for (Answer answer : answers) {
-            AnswerResponseDto answerResponseDto = new AnswerResponseDto();
-            answerResponseDto.setAnswerId(answer.getAnswerId());
-            answerResponseDto.setAnswerer(answer.getAnswererID().getName());
-            answerResponseDto.setContent(answer.getContent());
-            answerResponseDto.setCreatedAt(answer.getCreatedAt());
-            answerResponseDto.setUpdatedAt(answer.getUpdatedAt());
-            answerResponseDtos.add(answerResponseDto);
-        }
+        List<AnswerResponseDto> answerResponseDtos = answerService.getAnswers(question.getQuestionId());
 
         QuestionDetailGetDto questionDetailGetDto = new QuestionDetailGetDto();
         questionDetailGetDto.setQuestion(questionResponseDto);

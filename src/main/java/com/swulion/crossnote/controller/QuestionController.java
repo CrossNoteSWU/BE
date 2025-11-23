@@ -1,8 +1,6 @@
 package com.swulion.crossnote.controller;
 
-import com.swulion.crossnote.dto.Question.QuestionListDto;
-import com.swulion.crossnote.dto.Question.QuestionRequestDto;
-import com.swulion.crossnote.dto.Question.QuestionResponseDto;
+import com.swulion.crossnote.dto.Question.*;
 import com.swulion.crossnote.service.CustomUserDetails;
 import com.swulion.crossnote.service.QuestionService;
 import lombok.RequiredArgsConstructor;
@@ -29,8 +27,29 @@ public class QuestionController {
 
     /* QNA 홈 */
     @GetMapping("/home")
-    public ResponseEntity<List<QuestionListDto>> getQuestionHome(@RequestParam String sort) {
+    public ResponseEntity<List<QuestionListDto>> getQuestionHome(@RequestParam(defaultValue = "latest") String sort) {
         List<QuestionListDto> questionListDtos = questionService.getQnaHome(sort);
         return ResponseEntity.ok(questionListDtos);
     }
+
+    @GetMapping("/detail/{columnId}")
+    public ResponseEntity<QuestionDetailGetDto> getQuestionDetail(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long columnId) {
+        Long userId = userDetails.getUser().getUserId();
+        QuestionDetailGetDto questionDetailGetDto = questionService.getQuestionDetail(userId, columnId);
+        return ResponseEntity.ok(questionDetailGetDto);
+    }
+
+    @PatchMapping("/update")
+    public ResponseEntity<QuestionResponseDto> updateQuestion(@RequestBody QuestionUpdateDto questionUpdateDto, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getUserId();
+        QuestionResponseDto questionResponseDto = questionService.updateQuestion(userId, questionUpdateDto);
+        return ResponseEntity.ok(questionResponseDto);
+    }
+
+    @DeleteMapping("/delete/{columnId}")
+    public ResponseEntity<String> deleteQuestion(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long columnId) {
+        Long userId = userDetails.getUser().getUserId();
+        return ResponseEntity.ok(questionService.deleteQuestion(userId, columnId));
+    }
 }
+
