@@ -16,6 +16,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -40,27 +41,50 @@ public class CustomOAuth2User implements OAuth2UserService<OAuth2UserRequest, OA
             String userNameAttributeName = userRequest.getClientRegistration()
                     .getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
 
-            // 3. 유저 정보(Attributes)
+            // 3. DTO(OAuthAttributes)로 유저 정보 통일
             Map<String, Object> attributes = oAuth2User.getAttributes();
-
-            // 4. DTO(OAuthAttributes)로 유저 정보 통일
             OAuthAttributes oAuthAttributes = OAuthAttributes.of(registrationId, userNameAttributeName, attributes);
             log.info("소셜 유저 정보 파싱 완료. (Email: {})", oAuthAttributes.getEmail());
 
-            // 5. DB에 유저 저장 또는 업데이트
-            User user = saveOrUpdateSocialUser(oAuthAttributes);
-            log.info("소셜 유저 DB 저장/업데이트 완료. (User ID: {})", user.getUserId());
-
-            // 6. Spring Security의 DefaultOAuth2User 객체 생성 및 반환
-            if (user.getEmail() == null) {
-                log.error("[치명적 오류] saveOrUpdateSocialUser 후 user.getEmail()이 null입니다.");
-                throw new OAuth2AuthenticationException(new OAuth2Error("USER_EMAIL_NULL", "저장된 유저의 이메일이 null입니다.", null));
+            if (oAuthAttributes.getEmail() != null) {
+                throw new OAuth2AuthenticationException(new OAuth2Error("EMAIL_NOT_PROVIDED",
+                        "소셜 로그인 이메일 저보가 없습니다.", null));
             }
+
+            // 4. 신규 유저 여부 판단 및 DB에 유저 저장 또는 업데이트
+            User user;
+            boolean isNewUser = false; // 핸들러로 넘길 플래그
+
+            Optional<User> userOptional = userRepository.findByEmail(oAuthAttributes.getEmail());
+
+            if (userOptional.isPresent()) {
+                // 기존 회원
+                user = userOptional.get();
+                if(user.getLoginType() == LoginType.LOCAL) {
+                    throw new OAuth2AuthenticationException(new OAuth2Error("EMAIL_DUPLICATE_LOCAL",
+                            "이미 존재하는 로컬 계정과 이메일이 중복됩니다.", null));
+                }
+                // 정보 업데이트
+                user = user.updateSocialInfo(oAuthAttributes.getName(), oAuthAttributes.getProfileImageUrl());
+                userRepository.save(user);
+                isNewUser = false;
+            } else {
+                // 신규 회원
+                user = oAuthAttributes.toEntity();
+                userRepository.save(user);
+                isNewUser = true;
+            }
+
+            // 5. 핸들러에 전달할 맵
+            Map<String, Object> customAttributes = new HashMap<>();
+            customAttributes.put("email", user.getEmail());
+            customAttributes.put("provider", registrationId); // google, kakao
+            customAttributes.put("isNewUser", isNewUser); // true, false
 
             return new DefaultOAuth2User(
                     Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
-                    Collections.singletonMap("email", user.getEmail()), // SuccessHandler에서 user를 찾기 위한 Key
-                    "email" // NameAttributeKey
+                    customAttributes,
+                    "email"
             );
 
         } catch (Exception e) { // 예외 처리

@@ -2,6 +2,7 @@ package com.swulion.crossnote.config;
 
 import com.swulion.crossnote.jwt.JwtAuthenticationFilter;
 import com.swulion.crossnote.oauth.CustomOAuth2User;
+import com.swulion.crossnote.oauth.OAuth2AuthenticationSuccessHandler;
 import com.swulion.crossnote.oauth.OAuth2LoginSuccessHandler;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -28,7 +29,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomOAuth2User customOAuth2UserService;
-    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -70,7 +71,7 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                        .successHandler(oAuth2LoginSuccessHandler)
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
                         .authorizationEndpoint(auth -> auth.baseUri("/auth/login"))
                 )
                 .exceptionHandling(exception -> exception
