@@ -2,6 +2,7 @@ package com.swulion.crossnote.config;
 
 import com.swulion.crossnote.jwt.JwtAuthenticationFilter;
 import com.swulion.crossnote.oauth.CustomOAuth2User;
+import com.swulion.crossnote.oauth.OAuth2AuthenticationSuccessHandler;
 import com.swulion.crossnote.oauth.OAuth2LoginSuccessHandler;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -37,6 +38,7 @@ public class SecurityConfig {
         this.corsConfigurationSource = corsConfigurationSource;
     }
 
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -47,17 +49,19 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))   // ✅ CORS 활성화
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/curation").permitAll() // 큐레이션 목록 조회는 허용
+                        .requestMatchers("/curation/**").authenticated() // 그 외 큐레이션은 인증 필요
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                        .successHandler(oAuth2LoginSuccessHandler)
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
                         .authorizationEndpoint(auth -> auth.baseUri("/auth/login"))
                 )
                 .exceptionHandling(exception -> exception

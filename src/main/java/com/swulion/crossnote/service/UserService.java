@@ -3,6 +3,7 @@ package com.swulion.crossnote.service;
 import com.swulion.crossnote.dto.Login.LocalLoginRequestDto;
 import com.swulion.crossnote.dto.Login.LocalSignUpRequestDto;
 import com.swulion.crossnote.dto.Login.LoginResponseDto;
+import com.swulion.crossnote.entity.Curation.CurationLevel;
 import com.swulion.crossnote.entity.LoginType;
 import com.swulion.crossnote.entity.User;
 import com.swulion.crossnote.repository.UserRepository;
@@ -50,6 +51,7 @@ public class UserService {
                 .password(encodedPassword) // 암호화된 비밀번호 저장
                 .name(requestDto.getName())
                 .loginType(LoginType.LOCAL) // 로컬 타입
+                .curationLevel(CurationLevel.LEVEL_1) // 큐레이션 레벨
                 .build();
 
         // DB에 저장
