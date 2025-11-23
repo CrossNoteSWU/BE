@@ -31,9 +31,9 @@ public class ColumnEntity {
 
     private String imageUrl;
 
-    private Integer likeCount;
-    private Integer commentCount;
-    private Integer scrapCount;
+    private Integer likeCount = 0;
+    private Integer commentCount = 0;
+    private Integer scrapCount = 0;
 
     private boolean isBestColumn;
 

@@ -1,13 +1,15 @@
 package com.swulion.crossnote.entity.QA;
 
+import com.swulion.crossnote.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Getter
+@Getter @Setter
 @NoArgsConstructor
 @Table(name = "answer")
 public class Answer {
@@ -20,7 +22,12 @@ public class Answer {
     @JoinColumn(name = "questionId")
     private Question questionId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "userId")
+    private User answererID;
+
     private String content;
+    private Integer likeCount = 0;
 
     private LocalDateTime createdAt;
 

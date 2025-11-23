@@ -3,13 +3,16 @@ package com.swulion.crossnote.entity.Column;
 import com.swulion.crossnote.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter @Setter
 @Table(name = "columnComment")
 public class ColumnComment {
 
@@ -21,7 +24,7 @@ public class ColumnComment {
     @JoinColumn(name = "columnId")
     private ColumnEntity columnId;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId")
     private User userId;
 

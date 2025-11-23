@@ -1,16 +1,18 @@
 package com.swulion.crossnote.service;
 
-import com.swulion.crossnote.dto.Column.ColumnReadResponseDto;
-import com.swulion.crossnote.dto.Column.ColumnRequestDto;
-import com.swulion.crossnote.dto.Column.ColumnDetailResponseDto;
+import com.swulion.crossnote.dto.Column.*;
 import com.swulion.crossnote.entity.Category;
 import com.swulion.crossnote.entity.Column.ColumnCategory;
+import com.swulion.crossnote.entity.Column.ColumnComment;
 import com.swulion.crossnote.entity.Column.ColumnEntity;
+import com.swulion.crossnote.entity.Curation.Like;
+import com.swulion.crossnote.entity.Curation.Scrap;
+import com.swulion.crossnote.entity.Curation.ScrapTargetType;
+import com.swulion.crossnote.entity.NotificationType;
 import com.swulion.crossnote.entity.User;
-import com.swulion.crossnote.repository.CategoryRepository;
-import com.swulion.crossnote.repository.ColumnCategoryRepository;
-import com.swulion.crossnote.repository.ColumnRepository;
-import com.swulion.crossnote.repository.UserRepository;
+import com.swulion.crossnote.repository.*;
+import com.swulion.crossnote.repository.Curation.LikeRepository;
+import com.swulion.crossnote.repository.Curation.ScrapRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -22,31 +24,19 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ColumnService {
     private final ColumnRepository columnRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final ColumnCategoryRepository columnCategoryRepository;
+    private final ColumnCommentRepository columnCommentRepository;
+    private final LikeRepository likeRepository;
+    private final NotificationService notificationService;
+    private final ScrapRepository scrapRepository;
 
-    /* 칼럼 피드 */
-//    public List<ColumnListDto> getColumnHome(){
-//        List<ColumnEntity> columns = columnRepository.findAllOrderByCreateDateDesc();
-//        List<ColumnListDto> columnListDtos = new ArrayList<>();
-//        for (ColumnEntity columnEntity : columns) {
-//        columnListDtos.add(new ColumnListDto(
-//                columnEntity.getColumnId(),
-//                columnEntity.getColumnAutherId(),
-//                columnEntity.getTitle(),
-//                columnEntity.getContent(),
-//                columnEntity.getImageUrl(),
-//                columnEntity.getLikeCount(),
-//                columnEntity.getCommentCount()
-//        ));}
-//        return columnListDtos;
-//    }
 
     /* 칼럼 생성 */
+    @Transactional
     public ColumnDetailResponseDto createColumn(ColumnRequestDto columnRequestDto, Long loginUserId) {
 
         User user = userRepository.findById(loginUserId)
@@ -87,6 +77,7 @@ public class ColumnService {
     }
 
     /* 칼럼 삭제 */
+    @Transactional
     public Integer deleteColumn(Long columnId) {
         ColumnEntity columnEntity = columnRepository.findById(columnId).orElse(null);
 
@@ -102,6 +93,7 @@ public class ColumnService {
     }
 
     /* 칼럼 수정 */
+    @Transactional
     public ColumnDetailResponseDto updateColumn(Long columnId, ColumnRequestDto columnRequestDto, Long loginUserId) {
 
         User user = userRepository.findById(loginUserId)
@@ -137,8 +129,18 @@ public class ColumnService {
     }
 
     /* 전체 칼럼 조회 */
-    public List<ColumnReadResponseDto> getColumnHome() {
-        List<ColumnEntity> columnEntities = columnRepository.findAllByOrderByCreatedAtDesc();
+    public List<ColumnReadResponseDto> getColumnHome(String sort) {
+        List<ColumnEntity> columnEntities = new ArrayList<>();
+        if (sort.equals("latest")) {
+            columnEntities = columnRepository.findAllByOrderByCreatedAtDesc();
+        }else if(sort.equals("popular")){
+            columnEntities = columnRepository.findAllByOrderByLikeCountDesc();
+        }else if(sort.equals("comment")){
+            columnEntities = columnRepository.findAllByOrderByCommentCountDesc();
+        }else{
+            columnEntities = columnRepository.findAllByOrderByCreatedAtDesc();
+        }
+
         List<ColumnReadResponseDto> columnReadResponseDtos = new ArrayList<>();
         for (ColumnEntity columnEntity : columnEntities) {
             ColumnReadResponseDto columnReadResponseDto = new ColumnReadResponseDto();
@@ -168,11 +170,12 @@ public class ColumnService {
 
     }
 
-    public ColumnDetailResponseDto getColumn(Long columnId) {
+    /* 칼럼 상세 보기 */
+    public ColumnDetailGetDto getColumn(Long columnId) {
         ColumnEntity columnEntity = columnRepository.findById(columnId).orElse(null);
         if (columnEntity == null){
             throw new EntityNotFoundException("Column Not Found");
-        }else {
+        }
             List<ColumnCategory> columnCategories = columnCategoryRepository.findByColumnId(columnEntity);
             List<Long> categories = new ArrayList<>();
             for (ColumnCategory columnCategory : columnCategories) {
@@ -183,7 +186,7 @@ public class ColumnService {
             Long cat2 = categories.size() > 1 ? categories.get(1) : null;
             Long cat3 = categories.size() > 2 ? categories.get(2) : null;
 
-            return new ColumnDetailResponseDto(
+            ColumnDetailResponseDto columnDetailResponseDto = new ColumnDetailResponseDto(
                     columnEntity.getColumnAutherId().getUserId(),
                     columnEntity.getTitle(),
                     columnEntity.getContent(),
@@ -197,7 +200,21 @@ public class ColumnService {
                     cat2,
                     cat3
             );
+
+        List<ColumnComment> columnComments = columnCommentRepository.findAllByColumnId(columnEntity);
+        List<ColumnCommentGetDto> columnCommentGetDtos = new ArrayList<>();
+        for (ColumnComment columnComment : columnComments) {
+            ColumnCommentGetDto columnCommentGetDto = new ColumnCommentGetDto();
+            columnCommentGetDto.setUserId(columnComment.getUserId().getUserId());
+            columnCommentGetDto.setComment(columnComment.getComment());
+            columnCommentGetDto.setCreatedAt(columnComment.getCreatedAt());
+            columnCommentGetDto.setUpdatedAt(columnComment.getUpdatedAt());
+            columnCommentGetDtos.add(columnCommentGetDto);
         }
+        ColumnDetailGetDto columnDetailGetDto = new ColumnDetailGetDto();
+        columnDetailGetDto.setColumnDetailResponseDto(columnDetailResponseDto);
+        columnDetailGetDto.setColumnCommentGetDtos(columnCommentGetDtos);
+        return columnDetailGetDto;
 
     }
 
@@ -240,5 +257,81 @@ public class ColumnService {
         categories.add(responseCatId3);
 
         return categories;
+    }
+
+    @Transactional
+    public String likeColumn(Long userId, Long columnId) {
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new EntityNotFoundException("User Not Found")
+        );
+        ColumnEntity columnEntity = columnRepository.findById(columnId).orElseThrow(
+                () -> new EntityNotFoundException("Column Not Found")
+        );
+
+        User author = columnEntity.getColumnAutherId();
+        if(author.getUserId().equals(userId)){
+            return "내가 작성한 칼럼은 좋아요를 누를 수 없습니다.";
+        }
+        if(likeRepository.findByUserAndTargetTypeAndTargetId(user, ScrapTargetType.COLUMN, columnId).isPresent()){
+            Like like = likeRepository.findByUserAndTargetTypeAndTargetId(user, ScrapTargetType.COLUMN, columnId).orElseThrow(
+                    () -> new EntityNotFoundException("Like Not Found")
+            );
+            likeRepository.delete(like);
+            columnEntity.setLikeCount(columnEntity.getLikeCount() - 1);
+            if(columnEntity.getLikeCount() < 10 && columnEntity.getCommentCount() < 10){
+                columnEntity.setBestColumn(true);
+            }
+            columnRepository.save(columnEntity);
+            return "좋아요 취소";
+        }
+        Like like = new Like(user, ScrapTargetType.COLUMN, columnId);
+        likeRepository.save(like);
+
+        columnEntity.setLikeCount(columnEntity.getLikeCount() + 1);
+       if(columnEntity.getLikeCount() >= 10 && columnEntity.getScrapCount() >= 10){
+            columnEntity.setBestColumn(true);
+        }
+        columnRepository.save(columnEntity);
+
+        String message = user.getName() + "님이 내 칼럼에 좋아요를 남겼어요.";
+        notificationService.sendNotification(author.getUserId(), user.getUserId(), NotificationType.COLUMN, columnId, message);
+
+        return "좋아요 완료";
+
+    }
+
+    @Transactional
+    public String scrapColumn(Long userId, Long columnId) {
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new EntityNotFoundException("User Not Found")
+        );
+        ColumnEntity columnEntity = columnRepository.findById(columnId).orElseThrow(
+                () -> new EntityNotFoundException("Column Not Found")
+        );
+
+        User author = columnEntity.getColumnAutherId();
+        if(author.getUserId().equals(userId)){
+            return "내가 작성한 칼럼은 스크랩 할 수 없습니다.";
+        }
+        if(scrapRepository.findByUserAndTargetTypeAndTargetId(user, ScrapTargetType.COLUMN, columnId).isPresent()){
+            Scrap scrap = scrapRepository.findByUserAndTargetTypeAndTargetId(user, ScrapTargetType.COLUMN, columnId).orElseThrow(
+                    () -> new EntityNotFoundException("Scrap Not Found")
+            );
+            scrapRepository.delete(scrap);
+            columnEntity.setScrapCount(columnEntity.getScrapCount() - 1);
+            columnRepository.save(columnEntity);
+            return "스크랩 취소";
+        }
+        Like like = new Like(user, ScrapTargetType.COLUMN, columnId);
+        likeRepository.save(like);
+
+        columnEntity.setScrapCount(columnEntity.getScrapCount() + 1);
+        if(columnEntity.getLikeCount() >= 10 && columnEntity.getScrapCount() >= 10){
+            columnEntity.setBestColumn(true);
+        }
+        columnRepository.save(columnEntity);
+
+        return "스크랩 완료";
+
     }
 }
