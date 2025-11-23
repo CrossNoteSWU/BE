@@ -5,13 +5,17 @@ import com.swulion.crossnote.dto.balance.SubmitAnswerRequest;
 import com.swulion.crossnote.dto.balance.AnswerResultDto;
 import com.swulion.crossnote.dto.balance.CurationLinkDto;
 import com.swulion.crossnote.dto.balance.BalanceHomeDto;
+import com.swulion.crossnote.entity.User;
 import com.swulion.crossnote.entity.balance.BalanceOption;
 import com.swulion.crossnote.entity.balance.BalanceQuiz;
 import com.swulion.crossnote.entity.balance.QuizType;
+import com.swulion.crossnote.entity.balance.UserBalanceChoice;
 import com.swulion.crossnote.repository.BalanceOptionRepository;
 import com.swulion.crossnote.repository.BalanceQuizRepository;
+import com.swulion.crossnote.repository.balance.UserBalanceChoiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.swulion.crossnote.entity.Category;
 import com.swulion.crossnote.repository.CategoryRepository;
@@ -22,11 +26,13 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class BalanceGameService {
 	private final BalanceQuizRepository quizRepository;
 	private final BalanceOptionRepository optionRepository;
 	private final CurationSelectorService curationSelectorService;
 	private final CategoryRepository categoryRepository;
+	private final UserBalanceChoiceRepository userBalanceChoiceRepository;
 
 	// 오늘의 퀴즈 랜덤 조회
 	public BalanceQuizDto getTodayQuiz() {
@@ -71,7 +77,7 @@ public class BalanceGameService {
 	}
 
 	// 정답 제출
-	public AnswerResultDto submitAnswer(Long quizId, SubmitAnswerRequest request) {
+	public AnswerResultDto submitAnswer(Long quizId, SubmitAnswerRequest request, User user) {
 		BalanceQuiz quiz = quizRepository.findById(quizId)
 			.orElseThrow(() -> new IllegalArgumentException("퀴즈가 존재하지 않습니다."));
 
@@ -80,6 +86,18 @@ public class BalanceGameService {
 				throw new IllegalArgumentException("OX 정답이 필요합니다.");
 			}
 			boolean correct = Boolean.TRUE.equals(quiz.getOxAnswer()) == Boolean.TRUE.equals(request.getOxAnswer());
+			
+			// 사용자 선택 저장 (인증된 사용자인 경우)
+			if (user != null) {
+				UserBalanceChoice choice = UserBalanceChoice.builder()
+						.user(user)
+						.quiz(quiz)
+						.oxAnswer(request.getOxAnswer())
+						.category(quiz.getCategory())
+						.build();
+				userBalanceChoiceRepository.save(choice);
+			}
+			
 			// 두 번째 연속 오답 처리: previousWrong=true 이고 이번에도 오답이면 이동 메시지 반환
 			if (!correct && Boolean.TRUE.equals(request.getPreviousWrong())) {
 				return new AnswerResultDto(false, "관련 큐레이션으로 이동할게요", null);
@@ -96,6 +114,18 @@ public class BalanceGameService {
 		if (!option.getQuiz().getId().equals(quizId)) {
 			throw new IllegalArgumentException("퀴즈와 선택지가 일치하지 않습니다.");
 		}
+		
+		// 사용자 선택 저장 (인증된 사용자인 경우)
+		if (user != null) {
+			UserBalanceChoice choice = UserBalanceChoice.builder()
+					.user(user)
+					.quiz(quiz)
+					.option(option)
+					.category(option.getCategory() != null ? option.getCategory() : quiz.getCategory())
+					.build();
+			userBalanceChoiceRepository.save(choice);
+		}
+		
 		return AnswerResultDto.forPreference();
 	}
 

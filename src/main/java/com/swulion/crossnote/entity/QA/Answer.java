@@ -24,7 +24,7 @@ public class Answer {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userId")
-    private User answererID;
+    private User answererID; // 답변자
 
     private String content;
     private Integer likeCount = 0;
