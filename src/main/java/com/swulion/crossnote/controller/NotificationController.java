@@ -47,14 +47,14 @@ public class NotificationController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/me/delete")
+    @DeleteMapping("/me")
     public ResponseEntity<?> deleteNotification(@AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUser().getUserId();
         notificationService.deleteNotification(userId);
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/me/readAll")
+    @PatchMapping("/me")
     public ResponseEntity<?> readAllNotification(@AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUser().getUserId();
         notificationService.readAllNotifications(userId);
