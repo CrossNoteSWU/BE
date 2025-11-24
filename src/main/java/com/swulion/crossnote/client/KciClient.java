@@ -37,7 +37,6 @@
 //        try {
 //            // URI 안전하게 생성 (한글 포함)
 //            URI uri = UriComponentsBuilder.fromUriString(KCI_API_URL)
-//                    .queryParam("key", "86481314") // 실제 키 사용
 //                    .queryParam("apiCode", "articleSearch")
 //                    .queryParam("title", query) // 한글 그대로
 //                    .queryParam("displayCount", 1)
