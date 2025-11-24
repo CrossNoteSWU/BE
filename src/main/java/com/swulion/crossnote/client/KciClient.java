@@ -1,5 +1,6 @@
 //package com.swulion.crossnote.client;
 //
+//import com.fasterxml.jackson.databind.ObjectMapper;
 //import com.swulion.crossnote.config.ApiKeys;
 //import com.swulion.crossnote.dto.Curation.CurationSourceDto;
 //import com.swulion.crossnote.dto.Curation.KciResponseDto;
@@ -10,7 +11,9 @@
 //import lombok.RequiredArgsConstructor;
 //import lombok.extern.slf4j.Slf4j;
 //
+//import org.springframework.beans.factory.annotation.Value;
 //import org.springframework.http.*;
+//import org.springframework.stereotype.Component;
 //import org.springframework.stereotype.Service;
 //import org.springframework.web.client.RestTemplate;
 //import org.springframework.web.util.UriComponentsBuilder;
@@ -21,27 +24,28 @@
 //import java.util.List;
 //
 //@Slf4j
-//@Service("kciClient")
+//@Component
 //@RequiredArgsConstructor
 //public class KciClient implements CurationSourceClient {
 //
 //    private final RestTemplate restTemplate;
 //    private final ApiKeys apiKeys;
-//    private final XmlMapper xmlMapper;
+//    private final ObjectMapper objectMapper;
 //
 //    private static final String KCI_API_URL = "https://open.kci.go.kr/po/openapi/openApiSearch.kci";
+//    // URL 예시
+//    // https://open.kci.go.kr/po/openapi/openApiSearch.kci?apiCode=articleSearch&key=인증키&title=검색키워드,
 //
 //    @Override
 //    public CurationSourceDto fetchSource(String query) {
-//
 //        try {
 //            // URI 안전하게 생성 (한글 포함)
 //            URI uri = UriComponentsBuilder.fromUriString(KCI_API_URL)
-//                    .queryParam("key", "86481314") // 실제 키 사용
+//                    .queryParam("key", apiKeys.getKci())
 //                    .queryParam("apiCode", "articleSearch")
 //                    .queryParam("title", query) // 한글 그대로
 //                    .queryParam("displayCount", 1)
-//                    .encode() // <- 중요, UTF-8로 안전하게 인코딩
+//                    .encode() // UTF-8로 안전하게 인코딩
 //                    .build()
 //                    .toUri();
 //
@@ -61,23 +65,6 @@
 //                log.warn("[KciClient] API 응답이 없거나 오류 발생. Status: {}", response.getStatusCode().value());
 //                return null;
 //            }
-//
-//            // XML -> DTO 파싱
-//            KciResponseDto dto = xmlMapper.readValue(response.getBody(), KciResponseDto.class);
-//
-//            if (dto.getRecords() == null || dto.getRecords().isEmpty()) {
-//                log.warn("[KciClient] <record> 없음. 쿼리: {}", query);
-//                return null;
-//            }
-//
-//            KciResponseDto.ArticleInfo article = dto.getRecords().get(0).getArticleInfo();
-//            if (article == null) return null;
-//
-//            // 제목과 초록
-//            String title = findOriginalText(article.getTitleGroup() != null ? article.getTitleGroup().getArticleTitles() : null);
-//            String abstractText = findOriginalText(article.getAbstractGroup() != null ? article.getAbstractGroup().getAbstracts() : null);
-//            if (abstractText == null || abstractText.isBlank()) abstractText = title;
-//            if (abstractText == null || abstractText.isBlank()) return null;
 //
 //            log.info("[KciClient] 소스 확보 성공: {}", title);
 //
