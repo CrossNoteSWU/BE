@@ -47,8 +47,10 @@ public class ColumnCommentService {
         }
         columnRepository.save(column);
         Long columnWriterId = column.getColumnAutherId().getUserId();
-        String message = user.getName() + "님이 내 칼럼에 댓글을 남겼어요.";
-        notificationService.sendNotification(columnWriterId, userId, NotificationType.COLUMN, column.getColumnId(), message);
+        if(!userId.equals(columnWriterId)){
+            String message = user.getName() + "님이 내 칼럼에 댓글을 남겼어요.";
+            notificationService.sendNotification(columnWriterId, userId, NotificationType.COLUMN, column.getColumnId(), message);
+        }
 
         ColumnCommentResponseDto columnCommentResponseDto = new ColumnCommentResponseDto();
         columnCommentResponseDto.setColumnCommentId(columnComment.getCommentId());
@@ -56,6 +58,8 @@ public class ColumnCommentService {
         columnCommentResponseDto.setColumnId(columnCommentCreateDto.getColumnId());
         columnCommentResponseDto.setComment(columnCommentCreateDto.getComment());
         columnCommentResponseDto.setCreatedAt(columnComment.getCreatedAt());
+
+
         return columnCommentResponseDto;
     }
 

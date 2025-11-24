@@ -130,7 +130,7 @@ public class ColumnService {
 
     /* 전체 칼럼 조회 */
     public List<ColumnReadResponseDto> getColumnHome(String sort) {
-        List<ColumnEntity> columnEntities = new ArrayList<>();
+        List<ColumnEntity> columnEntities;
         if (sort.equals("latest")) {
             columnEntities = columnRepository.findAllByOrderByCreatedAtDesc();
         }else if(sort.equals("popular")){
