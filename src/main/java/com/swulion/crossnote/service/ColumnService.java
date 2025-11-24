@@ -278,8 +278,8 @@ public class ColumnService {
             );
             likeRepository.delete(like);
             columnEntity.setLikeCount(columnEntity.getLikeCount() - 1);
-            if(columnEntity.getLikeCount() < 10 && columnEntity.getCommentCount() < 10){
-                columnEntity.setBestColumn(true);
+            if(columnEntity.getLikeCount() < 10 && columnEntity.getCommentCount() < 10 && columnEntity.isBestColumn()){
+                columnEntity.setBestColumn(false);
             }
             columnRepository.save(columnEntity);
             return "좋아요 취소";
@@ -319,8 +319,8 @@ public class ColumnService {
             );
             scrapRepository.delete(scrap);
             columnEntity.setScrapCount(columnEntity.getScrapCount() - 1);
-            if(columnEntity.getLikeCount() < 10 && columnEntity.getCommentCount() < 10){
-                columnEntity.setBestColumn(true);
+            if(columnEntity.getLikeCount() < 10 && columnEntity.getCommentCount() < 10 && columnEntity.isBestColumn()){
+                columnEntity.setBestColumn(false);
             }
             columnRepository.save(columnEntity);
             return "스크랩 취소";
