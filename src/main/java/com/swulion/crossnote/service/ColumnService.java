@@ -319,6 +319,9 @@ public class ColumnService {
             );
             scrapRepository.delete(scrap);
             columnEntity.setScrapCount(columnEntity.getScrapCount() - 1);
+            if(columnEntity.getLikeCount() < 10 && columnEntity.getCommentCount() < 10){
+                columnEntity.setBestColumn(true);
+            }
             columnRepository.save(columnEntity);
             return "스크랩 취소";
         }

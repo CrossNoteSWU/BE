@@ -126,7 +126,7 @@ public class AnswerService {
 
         User answerUser = answer.getAnswererID();
         if (!user.equals(answerUser)) {
-            throw new RuntimeException("작성자만 삭제할 수 있습니다.");
+            return ("작성자만 삭제할 수 있습니다.");
         }
         answerRepository.delete(answer);
         Question question = answer.getQuestionId();

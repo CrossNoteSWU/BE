@@ -18,27 +18,27 @@ import org.springframework.web.bind.annotation.*;
 public class AnswerController {
     private final AnswerService answerService;
 
-    @PostMapping("/create")
+    @PostMapping("")
     public ResponseEntity<AnswerResponseDto> createAnswer(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody AnswerCreateDto answerCreateDto) {
         Long userId = userDetails.getUser().getUserId();
         AnswerResponseDto answerResponseDto = answerService.createAnswer(userId, answerCreateDto);
         return ResponseEntity.ok(answerResponseDto);
     }
 
-    @PatchMapping("/update")
+    @PatchMapping("")
     public ResponseEntity<AnswerResponseDto> updateAnswer(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody AnswerUpdateDto answerUpdateDto) {
         Long userId = userDetails.getUser().getUserId();
         AnswerResponseDto answerResponseDto = answerService.updateAnswer(userId, answerUpdateDto);
         return ResponseEntity.ok(answerResponseDto);
     }
 
-    @DeleteMapping("/delete/{answerId}")
+    @DeleteMapping("/{answerId}")
     public ResponseEntity<String> deleteAnswer(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long answerId) {
         Long userId = userDetails.getUser().getUserId();
         return ResponseEntity.ok(answerService.deleteAnswer(userId, answerId));
     }
 
-    @PatchMapping("/like/{answerId}")
+    @PatchMapping("/{answerId}/like")
     public ResponseEntity<String> likeAnswer(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long answerId) {
         Long userId = userDetails.getUser().getUserId();
         return ResponseEntity.ok(answerService.likeAnswer(userId, answerId));
