@@ -6,8 +6,10 @@ import com.swulion.crossnote.dto.balance.AnswerResultDto;
 import com.swulion.crossnote.dto.balance.CurationLinkDto;
 import com.swulion.crossnote.dto.balance.BalanceHomeDto;
 import com.swulion.crossnote.service.BalanceGameService;
+import com.swulion.crossnote.service.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -49,9 +51,13 @@ public class BalanceGameController {
 	@PostMapping("/{quizId}/answer")
 	public ResponseEntity<AnswerResultDto> submitAnswer(
 		@PathVariable("quizId") Long quizId,
-		@RequestBody SubmitAnswerRequest request
+		@RequestBody SubmitAnswerRequest request,
+		@AuthenticationPrincipal CustomUserDetails userDetails
 	) {
-		return ResponseEntity.ok(balanceGameService.submitAnswer(quizId, request));
+		// 인증된 사용자인 경우에만 선택 저장
+		com.swulion.crossnote.entity.User user = (userDetails != null && userDetails.getUser() != null) 
+				? userDetails.getUser() : null;
+		return ResponseEntity.ok(balanceGameService.submitAnswer(quizId, request, user));
 	}
 
 	// 3) OX 결과 → 동일 카테고리 큐레이션으로 이동
