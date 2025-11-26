@@ -163,7 +163,6 @@ public class ColumnService {
 
             columnReadResponseDto.setAuthorId(columnEntity.getColumnAutherId().getUserId());
             columnReadResponseDto.setTitle(columnEntity.getTitle());
-            columnReadResponseDto.setContent(columnEntity.getContent());
             columnReadResponseDto.setIsBestColumn(columnEntity.isBestColumn());
             columnReadResponseDto.setCommentCount(columnEntity.getCommentCount());
             columnReadResponseDto.setLikeCount(columnEntity.getLikeCount());
@@ -356,7 +355,6 @@ public class ColumnService {
             columnReadResponseDto.setColumnId(columnEntity.getColumnId());
             columnReadResponseDto.setAuthorId(columnEntity.getColumnAutherId().getUserId());
             columnReadResponseDto.setTitle(columnEntity.getTitle());
-            columnReadResponseDto.setContent(columnEntity.getContent());
             columnReadResponseDto.setIsBestColumn(columnEntity.isBestColumn());
             columnReadResponseDto.setLikeCount(columnEntity.getLikeCount());
             columnReadResponseDto.setCommentCount(columnEntity.getCommentCount());

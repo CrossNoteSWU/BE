@@ -8,7 +8,6 @@ public class ColumnReadResponseDto {
     Long columnId;
     Long authorId;
     String title;
-    String content;
     Boolean isBestColumn;
     Integer likeCount;
     Integer commentCount;
