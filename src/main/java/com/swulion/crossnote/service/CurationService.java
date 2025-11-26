@@ -3,6 +3,7 @@ package com.swulion.crossnote.service;
 import com.swulion.crossnote.client.CurationSourceClient;
 //import com.swulion.crossnote.client.KciClient;
 //import com.swulion.crossnote.client.NationalLibClient;
+import com.swulion.crossnote.client.KciClient;
 import com.swulion.crossnote.client.NlBookClient;
 import com.swulion.crossnote.dto.Curation.*;
 import com.swulion.crossnote.entity.Category;
@@ -49,7 +50,7 @@ public class CurationService {
     private final TerminologyService terminologyService;
 
     // 테스트용
-    //private final KciClient kciClient;
+    private final KciClient kciClient;
     private final NlBookClient nlBookClient;
 
     private final Random random = new Random(); // (랜덤 선택용)
@@ -78,53 +79,53 @@ public class CurationService {
 //        log.info("데일리 큐레이션 생성 작업 완료.");
 //    }
 
-//    // 현실적인 대안 - 4번에 걸쳐서 큐레이션 생성하기 (API 호출량 제한 이유)
-//    @Transactional
-//    public void createDailyCurations() {
-//        log.info("데일리 큐레이션 생성 작업 시작 (분산 배치 실행)");
-//
-//        // 1. 모든 하위 카테고리 (29개)를 조회
-//        List<Category> allCategories = categoryRepository.findByParentCategoryIdIsNotNull();
-//
-//        if (allCategories.isEmpty()) {
-//            log.warn("DB에 생성 가능한 카테고리가 없습니다.");
-//            return;
-//        }
-//
-//        // 2. 분할 계산: 29개 카테고리를 4개의 배치로 나눔
-//        final int BATCH_COUNT = 4;
-//        // 29 / 4 = 7.25 이므로 한 배치당 최대 8개 카테고리를 처리
-//        final int CATEGORIES_PER_BATCH = (int) Math.ceil((double) allCategories.size() / BATCH_COUNT); // 8
-//
-//        /* 기록 */
-//        // 3. 현재 실행할 배치 번호 설정 (수동 조정 필요: 1, 2, 3, 4)
-//        //    실제 스케줄러에서는 이 값을 DB나 캐시에서 관리하며, 다음 실행 시 +1 되어야 함
-//        int currentBatchIndex = 2;
-//
-//        int startIndex = (currentBatchIndex - 1) * CATEGORIES_PER_BATCH; // 0
-//        // endIndex는 현재 배치 사이즈(8)를 넘지 않도록, 전체 리스트 사이즈(29)를 넘지 않도록 설정
-//        int endIndex = Math.min(currentBatchIndex * CATEGORIES_PER_BATCH, allCategories.size());
-//
-//        // 4. 현재 배치에 해당하는 카테고리만 추출
-//        //    예: allCategories.subList(0, 8) -> 8개 카테고리만 포함
-//        List<Category> categoriesToProcess = allCategories.subList(startIndex, endIndex);
-//
-//        log.warn("=== [TEST] 현재 배치({}/{}): {}개 카테고리 (총 {}개 큐레이션) 생성 시작 ===",
-//                currentBatchIndex, BATCH_COUNT, categoriesToProcess.size(), categoriesToProcess.size() * 4);
-//
-//        // 5. 선택된 카테고리에 대해서만 큐레이션 생성
-//        for (Category category : categoriesToProcess) {
-//            // Level A (LEVEL_1)
-//            createInsightCuration(category, CurationLevel.LEVEL_1);
-//            createCrossNoteCuration(category, CurationLevel.LEVEL_1);
-//
-//            // Level B (LEVEL_2)
-//            createInsightCuration(category, CurationLevel.LEVEL_2);
-//            createCrossNoteCuration(category, CurationLevel.LEVEL_2);
-//        }
-//
-//        log.info("데일리 큐레이션 생성 작업 완료.");
-//    }
+    // 현실적인 대안 - 4번에 걸쳐서 큐레이션 생성하기 (API 호출량 제한 이유)
+    @Transactional
+    public void createDailyCurations() {
+        log.info("데일리 큐레이션 생성 작업 시작 (분산 배치 실행)");
+
+        // 1. 모든 하위 카테고리 (29개)를 조회
+        List<Category> allCategories = categoryRepository.findByParentCategoryIdIsNotNull();
+
+        if (allCategories.isEmpty()) {
+            log.warn("DB에 생성 가능한 카테고리가 없습니다.");
+            return;
+        }
+
+        // 2. 분할 계산: 29개 카테고리를 4개의 배치로 나눔
+        final int BATCH_COUNT = 4;
+        // 29 / 4 = 7.25 이므로 한 배치당 최대 8개 카테고리를 처리
+        final int CATEGORIES_PER_BATCH = (int) Math.ceil((double) allCategories.size() / BATCH_COUNT); // 8
+
+        /* 기록 */
+        // 3. 현재 실행할 배치 번호 설정 (수동 조정 필요: 1, 2, 3, 4)
+        //    실제 스케줄러에서는 이 값을 DB나 캐시에서 관리하며, 다음 실행 시 +1 되어야 함
+        int currentBatchIndex = 1;
+
+        int startIndex = (currentBatchIndex - 1) * CATEGORIES_PER_BATCH; // 0
+        // endIndex는 현재 배치 사이즈(8)를 넘지 않도록, 전체 리스트 사이즈(29)를 넘지 않도록 설정
+        int endIndex = Math.min(currentBatchIndex * CATEGORIES_PER_BATCH, allCategories.size());
+
+        // 4. 현재 배치에 해당하는 카테고리만 추출
+        //    예: allCategories.subList(0, 8) -> 8개 카테고리만 포함
+        List<Category> categoriesToProcess = allCategories.subList(startIndex, endIndex);
+
+        log.warn("=== [TEST] 현재 배치({}/{}): {}개 카테고리 (총 {}개 큐레이션) 생성 시작 ===",
+                currentBatchIndex, BATCH_COUNT, categoriesToProcess.size(), categoriesToProcess.size() * 4);
+
+        // 5. 선택된 카테고리에 대해서만 큐레이션 생성
+        for (Category category : categoriesToProcess) {
+            // Level A (LEVEL_1)
+            createInsightCuration(category, CurationLevel.LEVEL_1);
+            createCrossNoteCuration(category, CurationLevel.LEVEL_1);
+
+            // Level B (LEVEL_2)
+            createInsightCuration(category, CurationLevel.LEVEL_2);
+            createCrossNoteCuration(category, CurationLevel.LEVEL_2);
+        }
+
+        log.info("데일리 큐레이션 생성 작업 완료.");
+    }
 
 //    // 테스트용 - 제미나이x. KCI
 //    @Transactional
