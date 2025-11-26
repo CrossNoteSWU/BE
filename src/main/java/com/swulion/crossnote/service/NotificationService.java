@@ -28,17 +28,27 @@ public class NotificationService {
 
     @Transactional
     public SseEmitter subscribe(Long userId) {
-        SseEmitter emitter = new SseEmitter();
+        SseEmitter emitter = new SseEmitter(60*60*1000L);
         sseEmitterRepository.save(userId, emitter);
 
-        emitter.onCompletion(()->sseEmitterRepository.delete(userId));
+        emitter.onTimeout(() -> {
+            emitter.complete();
+            sseEmitterRepository.delete(userId);
+        });
+
+        emitter.onCompletion(() -> {
+            sseEmitterRepository.delete(userId);
+        });
+
         try{
             emitter.send(SseEmitter.event()
                     .name("connect")
                     .data("connected"));
-        } catch (IOException e){
-            emitter.onCompletion(()->sseEmitterRepository.delete(userId));
+        } catch (IOException e) {
+            emitter.completeWithError(e);
+            sseEmitterRepository.delete(userId);
         }
+
         return emitter;
 
     };
@@ -65,12 +75,13 @@ public class NotificationService {
         SseEmitter emitter = sseEmitterRepository.get(receiverId);
         if (emitter == null) return;
 
-        try{
+        try {
             emitter.send(SseEmitter.event()
                     .name("notification")
                     .data(message));
-        }catch (IOException e){
-            emitter.onCompletion(()->sseEmitterRepository.delete(receiverId));
+        } catch (IOException e) {
+            emitter.completeWithError(e);
+            sseEmitterRepository.delete(receiverId);
         }
     }
 

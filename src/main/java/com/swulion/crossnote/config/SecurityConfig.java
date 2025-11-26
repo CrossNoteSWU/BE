@@ -60,6 +60,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/curation").permitAll() // 큐레이션 목록 조회는 허용
                         .requestMatchers("/curation/**").authenticated() // 그 외 큐레이션은 인증 필요
+                        .requestMatchers(HttpMethod.GET,"/notification/subscribe").permitAll() // SSE(EventSource) 연결 인증 없이 허용 (Authorization 헤더 전달 불가)
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
