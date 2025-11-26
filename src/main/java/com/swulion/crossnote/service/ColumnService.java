@@ -130,7 +130,7 @@ public class ColumnService {
 
     /* 전체 칼럼 조회 */
     public List<ColumnReadResponseDto> getColumnHome(String sort) {
-        List<ColumnEntity> columnEntities = new ArrayList<>();
+        List<ColumnEntity> columnEntities;
         if (sort.equals("latest")) {
             columnEntities = columnRepository.findAllByOrderByCreatedAtDesc();
         }else if(sort.equals("popular")){
@@ -278,8 +278,8 @@ public class ColumnService {
             );
             likeRepository.delete(like);
             columnEntity.setLikeCount(columnEntity.getLikeCount() - 1);
-            if(columnEntity.getLikeCount() < 10 && columnEntity.getCommentCount() < 10){
-                columnEntity.setBestColumn(true);
+            if(columnEntity.getLikeCount() < 10 && columnEntity.getCommentCount() < 10 && columnEntity.isBestColumn()){
+                columnEntity.setBestColumn(false);
             }
             columnRepository.save(columnEntity);
             return "좋아요 취소";
@@ -319,6 +319,9 @@ public class ColumnService {
             );
             scrapRepository.delete(scrap);
             columnEntity.setScrapCount(columnEntity.getScrapCount() - 1);
+            if(columnEntity.getLikeCount() < 10 && columnEntity.getCommentCount() < 10 && columnEntity.isBestColumn()){
+                columnEntity.setBestColumn(false);
+            }
             columnRepository.save(columnEntity);
             return "스크랩 취소";
         }

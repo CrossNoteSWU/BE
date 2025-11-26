@@ -2,8 +2,10 @@ package com.swulion.crossnote.controller;
 
 import com.swulion.crossnote.dto.NotificationGetDto;
 import com.swulion.crossnote.entity.Notification;
+import com.swulion.crossnote.jwt.JwtTokenProvider;
 import com.swulion.crossnote.service.CustomUserDetails;
 import com.swulion.crossnote.service.NotificationService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import java.util.List;
 @RequestMapping("/notification")
 public class NotificationController {
     private final NotificationService notificationService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @GetMapping("/me")
     public ResponseEntity<List<NotificationGetDto>> getNotificationAll(@AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -47,14 +50,14 @@ public class NotificationController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/me/delete")
+    @DeleteMapping("/me")
     public ResponseEntity<?> deleteNotification(@AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUser().getUserId();
         notificationService.deleteNotification(userId);
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/me/readAll")
+    @PatchMapping("/me")
     public ResponseEntity<?> readAllNotification(@AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUser().getUserId();
         notificationService.readAllNotifications(userId);
@@ -62,10 +65,16 @@ public class NotificationController {
     }
     
     // 프론트 SSE 연결용 엔드포인트
-    @GetMapping("/subscribe")
-    public SseEmitter subscribe(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        Long userId = userDetails.getUser().getUserId();
-        return notificationService.subscribe(userId);
+    @GetMapping(value = "/subscribe", produces = "text/event-stream")
+    public SseEmitter subscribe(@RequestParam String token, HttpServletResponse response) {
+        try {
+            Long userId = jwtTokenProvider.getUserId(token);
+            return notificationService.subscribe(userId);
+
+        } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return null;
+        }
     }
 
 }

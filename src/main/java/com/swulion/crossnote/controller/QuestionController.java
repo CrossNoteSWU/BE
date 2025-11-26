@@ -18,7 +18,7 @@ public class QuestionController {
     private final QuestionService questionService;
 
     /* 질문 생성 */
-    @PostMapping("/create")
+    @PostMapping("")
     public ResponseEntity<QuestionResponseDto> createQuestion(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody QuestionRequestDto questionRequestDto) {
         Long userId = userDetails.getUser().getUserId();
         QuestionResponseDto questionResponseDto = questionService.createQuestion(userId, questionRequestDto);
@@ -32,27 +32,27 @@ public class QuestionController {
         return ResponseEntity.ok(questionListDtos);
     }
 
-    @GetMapping("/detail/{columnId}")
-    public ResponseEntity<QuestionDetailGetDto> getQuestionDetail(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long columnId) {
+    @GetMapping("/{questionId}")
+    public ResponseEntity<QuestionDetailGetDto> getQuestionDetail(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long questionId) {
         Long userId = userDetails.getUser().getUserId();
-        QuestionDetailGetDto questionDetailGetDto = questionService.getQuestionDetail(userId, columnId);
+        QuestionDetailGetDto questionDetailGetDto = questionService.getQuestionDetail(userId, questionId);
         return ResponseEntity.ok(questionDetailGetDto);
     }
 
-    @PatchMapping("/update")
+    @PatchMapping("")
     public ResponseEntity<QuestionResponseDto> updateQuestion(@RequestBody QuestionUpdateDto questionUpdateDto, @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUser().getUserId();
         QuestionResponseDto questionResponseDto = questionService.updateQuestion(userId, questionUpdateDto);
         return ResponseEntity.ok(questionResponseDto);
     }
 
-    @DeleteMapping("/delete/{columnId}")
-    public ResponseEntity<String> deleteQuestion(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long columnId) {
+    @DeleteMapping("/{questionId}")
+    public ResponseEntity<String> deleteQuestion(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long questionId) {
         Long userId = userDetails.getUser().getUserId();
-        return ResponseEntity.ok(questionService.deleteQuestion(userId, columnId));
+        return ResponseEntity.ok(questionService.deleteQuestion(userId, questionId));
     }
 
-    @PatchMapping("/like/{questionId}")
+    @PatchMapping("/{questionId}/like")
     public ResponseEntity<String> likeQuestion(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long questionId) {
         Long userId = userDetails.getUser().getUserId();
         return ResponseEntity.ok(questionService.likeQuestion(userId, questionId));
