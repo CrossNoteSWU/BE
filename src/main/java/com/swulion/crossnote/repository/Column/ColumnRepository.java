@@ -1,4 +1,4 @@
-package com.swulion.crossnote.repository;
+package com.swulion.crossnote.repository.Column;
 
 import com.swulion.crossnote.entity.Column.ColumnEntity;
 import com.swulion.crossnote.entity.User;

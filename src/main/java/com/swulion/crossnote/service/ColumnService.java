@@ -11,6 +11,10 @@ import com.swulion.crossnote.entity.Curation.ScrapTargetType;
 import com.swulion.crossnote.entity.NotificationType;
 import com.swulion.crossnote.entity.User;
 import com.swulion.crossnote.repository.*;
+import com.swulion.crossnote.repository.Column.ColumnCategoryRepository;
+import com.swulion.crossnote.repository.Column.ColumnCommentRepository;
+import com.swulion.crossnote.repository.Column.ColumnRepository;
+import com.swulion.crossnote.repository.Column.ColumnRepositoryImpl;
 import com.swulion.crossnote.repository.Curation.LikeRepository;
 import com.swulion.crossnote.repository.Curation.ScrapRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -33,6 +37,7 @@ public class ColumnService {
     private final LikeRepository likeRepository;
     private final NotificationService notificationService;
     private final ScrapRepository scrapRepository;
+    private final ColumnRepositoryImpl columnRepositoryImpl;
 
 
     /* 칼럼 생성 */
@@ -147,17 +152,18 @@ public class ColumnService {
             columnReadResponseDto.setColumnId(columnEntity.getColumnId());
 
             List<ColumnCategory> columnCategories = columnCategoryRepository.findByColumnId(columnEntity);
-            List<Long> categories = new ArrayList<>();
+            List<String> categories = new ArrayList<>();
             for (ColumnCategory columnCategory : columnCategories) {
                 Category category = columnCategory.getCategoryId();
-                categories.add(category.getCategoryId());
+                categories.add(category.getCategoryName());
             }
 
-            Long cat2 = categories.size() > 1 ? categories.get(1) : null;
-            Long cat3 = categories.size() > 2 ? categories.get(2) : null;
+            String cat2 = categories.size() > 1 ? categories.get(1) : null;
+            String cat3 = categories.size() > 2 ? categories.get(2) : null;
 
             columnReadResponseDto.setAuthorId(columnEntity.getColumnAutherId().getUserId());
             columnReadResponseDto.setTitle(columnEntity.getTitle());
+            columnReadResponseDto.setContent(columnEntity.getContent());
             columnReadResponseDto.setIsBestColumn(columnEntity.isBestColumn());
             columnReadResponseDto.setCommentCount(columnEntity.getCommentCount());
             columnReadResponseDto.setLikeCount(columnEntity.getLikeCount());
@@ -259,6 +265,7 @@ public class ColumnService {
         return categories;
     }
 
+    /* Column 좋아요 */
     @Transactional
     public String likeColumn(Long userId, Long columnId) {
         User user = userRepository.findById(userId).orElseThrow(
@@ -300,6 +307,7 @@ public class ColumnService {
 
     }
 
+    /* Column 스크랩 */
     @Transactional
     public String scrapColumn(Long userId, Long columnId) {
         User user = userRepository.findById(userId).orElseThrow(
@@ -336,5 +344,27 @@ public class ColumnService {
 
         return "스크랩 완료";
 
+    }
+
+    /* Column 검색 */
+    public List<ColumnReadResponseDto> searchColumn(ColumnSearchDto columnSearchDto) {
+        List<ColumnEntity> columnEntities = columnRepositoryImpl.findWithKeyword(columnSearchDto.getCategoryId(), columnSearchDto.getKeyword());
+        List<ColumnReadResponseDto> columnReadResponseDtos = new ArrayList<>();
+        for(ColumnEntity columnEntity : columnEntities){
+            List<ColumnCategory> columnCategories = columnCategoryRepository.findByColumnId(columnEntity);
+            ColumnReadResponseDto columnReadResponseDto = new ColumnReadResponseDto();
+            columnReadResponseDto.setColumnId(columnEntity.getColumnId());
+            columnReadResponseDto.setAuthorId(columnEntity.getColumnAutherId().getUserId());
+            columnReadResponseDto.setTitle(columnEntity.getTitle());
+            columnReadResponseDto.setContent(columnEntity.getContent());
+            columnReadResponseDto.setIsBestColumn(columnEntity.isBestColumn());
+            columnReadResponseDto.setLikeCount(columnEntity.getLikeCount());
+            columnReadResponseDto.setCommentCount(columnEntity.getCommentCount());
+            columnReadResponseDto.setCategoryId1(!columnCategories.isEmpty() ? columnCategories.get(0).getCategoryId().getCategoryName() : null);
+            columnReadResponseDto.setCategoryId2(columnCategories.size() > 1 ? columnCategories.get(1).getCategoryId().getCategoryName() : null);
+            columnReadResponseDto.setCategoryId3(columnCategories.size() > 2 ? columnCategories.get(2).getCategoryId().getCategoryName() : null);
+            columnReadResponseDtos.add(columnReadResponseDto);
+        }
+        return columnReadResponseDtos;
     }
 }

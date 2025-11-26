@@ -4,7 +4,8 @@ import java.time.LocalDateTime;
 
 
 public record QuestionResponseDto (
-        Long questionerId, String title, String content, Integer likeCount,
+        Long questionId,
+        Long questionerId, String title, String content, Integer likeCount, Integer answerCount,
         LocalDateTime createdAt, LocalDateTime updatedAt,
         String category1, String category2, String category3) {
 

@@ -1,9 +1,6 @@
 package com.swulion.crossnote.controller;
 
-import com.swulion.crossnote.dto.Column.ColumnDetailGetDto;
-import com.swulion.crossnote.dto.Column.ColumnReadResponseDto;
-import com.swulion.crossnote.dto.Column.ColumnRequestDto;
-import com.swulion.crossnote.dto.Column.ColumnDetailResponseDto;
+import com.swulion.crossnote.dto.Column.*;
 import com.swulion.crossnote.service.ColumnCommentService;
 import com.swulion.crossnote.service.ColumnService;
 import com.swulion.crossnote.service.CustomUserDetails;
@@ -61,14 +58,20 @@ public class ColumnController {
     @PatchMapping("/{columnId}/like")
     public ResponseEntity<String> likeColumn(@PathVariable Long columnId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUser().getUserId();
-        return ResponseEntity.ok(columnService.likeColumn(columnId, userId));
+        return ResponseEntity.ok(columnService.likeColumn(userId, columnId));
     }
 
     /* Column 스크랩 */
     @PatchMapping("/{columnId}/scrap")
     public ResponseEntity<String> scrapColumn(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long columnId) {
         Long userId = userDetails.getUser().getUserId();
-        return ResponseEntity.ok(columnService.scrapColumn(columnId, userId));
+        return ResponseEntity.ok(columnService.scrapColumn(userId, columnId));
+    }
+
+    /* Column 검색 */
+    @GetMapping("/search")
+    public ResponseEntity<List<ColumnReadResponseDto>> searchColumn(@RequestBody ColumnSearchDto columnSearchDto) {
+        return ResponseEntity.ok(columnService.searchColumn(columnSearchDto));
     }
 
 

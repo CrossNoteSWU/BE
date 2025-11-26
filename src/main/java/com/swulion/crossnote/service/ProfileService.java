@@ -5,8 +5,8 @@ import com.swulion.crossnote.dto.UserProfileFullResponseDto;
 import com.swulion.crossnote.entity.Column.ColumnCategory;
 import com.swulion.crossnote.entity.Column.ColumnEntity;
 import com.swulion.crossnote.entity.User;
-import com.swulion.crossnote.repository.ColumnCategoryRepository;
-import com.swulion.crossnote.repository.ColumnRepository;
+import com.swulion.crossnote.repository.Column.ColumnCategoryRepository;
+import com.swulion.crossnote.repository.Column.ColumnRepository;
 import com.swulion.crossnote.repository.UserRepository;
 import com.swulion.crossnote.repository.FollowRepository;
 import lombok.RequiredArgsConstructor;
@@ -53,13 +53,13 @@ public class ProfileService {
 			dto.setLikeCount(entity.getLikeCount());
 
 			List<ColumnCategory> columnCategories = columnCategoryRepository.findByColumnId(entity);
-			List<Long> categories = new ArrayList<>();
+			List<String> categories = new ArrayList<>();
 			for (ColumnCategory columnCategory : columnCategories) {
-				categories.add(columnCategory.getCategoryId().getCategoryId());
+				categories.add(columnCategory.getCategoryId().getCategoryName());
 			}
-			Long cat1 = categories.size() > 0 ? categories.get(0) : null;
-			Long cat2 = categories.size() > 1 ? categories.get(1) : null;
-			Long cat3 = categories.size() > 2 ? categories.get(2) : null;
+			String cat1 = categories.size() > 0 ? categories.get(0) : null;
+			String cat2 = categories.size() > 1 ? categories.get(1) : null;
+			String cat3 = categories.size() > 2 ? categories.get(2) : null;
 
 			dto.setCategoryId1(cat1);
 			dto.setCategoryId2(cat2);

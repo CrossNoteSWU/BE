@@ -4,7 +4,7 @@ import com.swulion.crossnote.entity.Category;
 import com.swulion.crossnote.entity.Column.ColumnCategory;
 import com.swulion.crossnote.entity.Column.ColumnEntity;
 import com.swulion.crossnote.repository.CategoryRepository;
-import com.swulion.crossnote.repository.ColumnCategoryRepository;
+import com.swulion.crossnote.repository.Column.ColumnCategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
