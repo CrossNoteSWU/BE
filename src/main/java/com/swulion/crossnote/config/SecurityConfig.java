@@ -15,9 +15,12 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
+import java.util.Optional;
 
 @Configuration
 @EnableWebSecurity
@@ -27,18 +30,21 @@ public class SecurityConfig {
     private final CustomOAuth2User customOAuth2UserService;
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
-    private final CorsConfigurationSource corsConfigurationSource;
+    private final Optional<CorsConfigurationSource> corsConfigurationSource;
+    private final Environment environment;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                          CustomOAuth2User customOAuth2UserService,
                          OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler,
                          OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
-                         @Qualifier("corsConfigurationSource") CorsConfigurationSource corsConfigurationSource) {
+                         @Autowired(required = false) @Qualifier("corsConfigurationSource") CorsConfigurationSource corsConfigurationSource,
+                         Environment environment) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.customOAuth2UserService = customOAuth2UserService;
         this.oAuth2LoginSuccessHandler = oAuth2LoginSuccessHandler;
         this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
-        this.corsConfigurationSource = corsConfigurationSource;
+        this.corsConfigurationSource = Optional.ofNullable(corsConfigurationSource);
+        this.environment = environment;
     }
 
 
@@ -49,9 +55,22 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // 프로덕션 환경에서는 CORS 비활성화 (Nginx에서 처리)
+        boolean isProd = environment != null && 
+                         java.util.Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource))   // ✅ CORS 활성화
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable);
+        
+        // 프로덕션 환경이 아니면 CORS 활성화 (개발 환경용)
+        if (!isProd && corsConfigurationSource.isPresent()) {
+            http.cors(cors -> cors.configurationSource(corsConfigurationSource.get()));
+        } else {
+            // 프로덕션 환경에서는 CORS 비활성화 (Nginx에서 처리)
+            http.cors(AbstractHttpConfigurer::disable);
+        }
+        
+        http
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
