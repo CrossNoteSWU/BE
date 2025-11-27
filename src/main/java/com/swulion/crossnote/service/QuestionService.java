@@ -2,7 +2,6 @@ package com.swulion.crossnote.service;
 
 import com.swulion.crossnote.dto.Question.*;
 import com.swulion.crossnote.entity.*;
-import com.swulion.crossnote.entity.Column.ColumnEntity;
 import com.swulion.crossnote.entity.Curation.Like;
 import com.swulion.crossnote.entity.Curation.ScrapTargetType;
 import com.swulion.crossnote.entity.QA.Answer;
@@ -10,6 +9,10 @@ import com.swulion.crossnote.entity.QA.Question;
 import com.swulion.crossnote.entity.QA.QuestionCategory;
 import com.swulion.crossnote.repository.*;
 import com.swulion.crossnote.repository.Curation.LikeRepository;
+import com.swulion.crossnote.repository.QnA.AnswerRepository;
+import com.swulion.crossnote.repository.QnA.QuestionCategoryRepository;
+import com.swulion.crossnote.repository.QnA.QuestionRepository;
+import com.swulion.crossnote.repository.QnA.QuestionRepositoryImpl;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +35,7 @@ public class QuestionService {
     private final AnswerService answerService;
     private final LikeRepository likeRepository;
     private final NotificationService notificationService;
+    private final QuestionRepositoryImpl questionRepositoryImpl;
 
     /* 질문 생성 로직 */
     @Transactional
@@ -56,13 +60,14 @@ public class QuestionService {
 
 
 
-        return new QuestionResponseDto(questionerId.getUserId(), question.getTitle(), question.getContent(),
-                question.getLikeCount(), question.getCreatedAt(), question.getUpdatedAt(), category1, category2, category3);
+        return new QuestionResponseDto(question.getQuestionId(),
+                questionerId.getUserId(), question.getTitle(), question.getContent(),
+                question.getLikeCount(), question.getAnswerCount(), question.getCreatedAt(), question.getUpdatedAt(), category1, category2, category3);
 
     }
 
     /* Question 전체 보기 (홈) */
-    public List<QuestionListDto> getQnaHome(String sort){
+    public List<QuestionResponseDto> getQnaHome(String sort){
         List<Question> questions = questionRepository.findAllByOrderByCreatedAtDesc();
         if(sort.equals("popular")){
             questions = questionRepository.findAllByOrderByLikeCountDesc();
@@ -70,22 +75,29 @@ public class QuestionService {
         else if(sort.equals("comment")){
             questions = questionRepository.findAllByOrderByAnswerCountDesc();
         }
-        List<QuestionListDto> questionListDtos = new ArrayList<>();
+        List<QuestionResponseDto> questionListDtos = new ArrayList<>();
         for (Question question : questions) {
-            List<Answer> answers = answerRepository.findByQuestionId(question);
+            List<QuestionCategory> questionCategories = questionCategoryRepository.findAllByQuestionId(question);
             questionListDtos.add(
-                    new QuestionListDto(
+                    new QuestionResponseDto(
                             question.getQuestionId(),
+                            question.getQuestionerId().getUserId(),
                             question.getTitle(),
                             question.getContent(),
                             question.getLikeCount(),
-                            answers.size()
+                            question.getAnswerCount(),
+                            question.getCreatedAt(),
+                            question.getUpdatedAt(),
+                            questionCategories.get(0).getCategoryId().getCategoryName(),
+                            questionCategories.size() > 1  ? questionCategories.get(1).getCategoryId().getCategoryName() : null,
+                            questionCategories.size() > 2  ? questionCategories.get(2).getCategoryId().getCategoryName() : null
                     )
             );
         }
         return questionListDtos;
     }
 
+    /* Question 수정 */
     @Transactional
     public QuestionResponseDto updateQuestion(Long userId, QuestionUpdateDto questionUpdateDto) {
         User questionerId = userRepository.findById(userId)
@@ -128,8 +140,8 @@ public class QuestionService {
             String category3 = categories.size() > 2 ? categories.get(2).getCategoryName() : null;
 
 
-            return new QuestionResponseDto(questionerId.getUserId(), question.getTitle(), question.getContent(),
-                    question.getLikeCount(), question.getCreatedAt(), question.getUpdatedAt(), category1, category2, category3);
+            return new QuestionResponseDto(question.getQuestionId(), questionerId.getUserId(), question.getTitle(), question.getContent(),
+                    question.getLikeCount(), question.getAnswerCount(), question.getCreatedAt(), question.getUpdatedAt(), category1, category2, category3);
 
         }
     }
@@ -154,6 +166,7 @@ public class QuestionService {
         return categories;
     }
 
+    /* Question 삭제 */
     @Transactional
     public String deleteQuestion(Long userId, Long questionId) {
         Question question = questionRepository.findById(questionId).orElseThrow(
@@ -172,6 +185,7 @@ public class QuestionService {
         return "Question 삭제 완료";
     }
 
+    /* Question 상세 보기 + Answer */
     public QuestionDetailGetDto getQuestionDetail(Long userId, Long questionId) {
         Question question = questionRepository.findById(questionId).orElseThrow(
                 () -> new RuntimeException("Question Not Found")
@@ -193,16 +207,18 @@ public class QuestionService {
 
     }
 
+    /* Helper Method */
     private static QuestionResponseDto getQuestionResponseDto(List<QuestionCategory> questionCategories, User questionerId, Question question) {
         String category1 = !questionCategories.isEmpty()? questionCategories.get(0).getCategoryId().getCategoryName() : null;
         String category2 = questionCategories.size() > 1? questionCategories.get(1).getCategoryId().getCategoryName() : null;
         String category3 = questionCategories.size() > 2? questionCategories.get(2).getCategoryId().getCategoryName() : null;
 
-        QuestionResponseDto questionResponseDto = new QuestionResponseDto(questionerId.getUserId(), question.getTitle(), question.getContent(),
-                question.getLikeCount(), question.getCreatedAt(), question.getUpdatedAt(), category1, category2, category3);
+        QuestionResponseDto questionResponseDto = new QuestionResponseDto(question.getQuestionId(), questionerId.getUserId(), question.getTitle(), question.getContent(),
+                question.getLikeCount(), question.getAnswerCount(), question.getCreatedAt(), question.getUpdatedAt(), category1, category2, category3);
         return questionResponseDto;
     }
 
+    /* Question 좋아요 */
     @Transactional
     public String likeQuestion(Long userId, Long questionId) {
         User user = userRepository.findById(userId).orElseThrow(
@@ -234,6 +250,31 @@ public class QuestionService {
         notificationService.sendNotification(author.getUserId(), user.getUserId(), NotificationType.QUESTION, questionId, message);
 
         return "좋아요 완료";
+
+    }
+
+    /* Question 검색 */
+    public List<QuestionResponseDto> searchQuestion(QuestionSearchDto questionSearchDto){
+        List<Question> questions = questionRepositoryImpl.findWithKeyword(questionSearchDto.getCategoryId(), questionSearchDto.getKeyword());
+        List<QuestionResponseDto> questionResponseDtos = new ArrayList<>();
+        for(Question question : questions){
+            List<QuestionCategory> questionCategories = questionCategoryRepository.findAllByQuestionId(question);
+            QuestionResponseDto questionResponseDto = new QuestionResponseDto(
+                    question.getQuestionId(),
+                    question.getQuestionerId().getUserId(),
+                    question.getTitle(),
+                    question.getContent(),
+                    question.getLikeCount(),
+                    question.getAnswerCount(),
+                    question.getCreatedAt(),
+                    question.getUpdatedAt(),
+                    questionCategories.get(0).getCategoryId().getCategoryName(),
+                    questionCategories.size() > 1  ? questionCategories.get(1).getCategoryId().getCategoryName() : null,
+                    questionCategories.size() > 2  ? questionCategories.get(2).getCategoryId().getCategoryName() : null
+            );
+            questionResponseDtos.add(questionResponseDto);
+        }
+        return questionResponseDtos;
 
     }
 }

@@ -1,4 +1,4 @@
-package com.swulion.crossnote.repository;
+package com.swulion.crossnote.repository.QnA;
 
 import com.swulion.crossnote.entity.QA.Answer;
 import com.swulion.crossnote.entity.QA.Question;

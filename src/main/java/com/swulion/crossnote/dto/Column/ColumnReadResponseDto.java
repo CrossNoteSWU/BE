@@ -11,7 +11,7 @@ public class ColumnReadResponseDto {
     Boolean isBestColumn;
     Integer likeCount;
     Integer commentCount;
-    Long categoryId1;
-    Long categoryId2;
-    Long categoryId3;
+    String categoryId1;
+    String categoryId2;
+    String categoryId3;
 }
