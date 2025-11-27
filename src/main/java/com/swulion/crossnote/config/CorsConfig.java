@@ -8,8 +8,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-@Configuration
-@Profile("!prod") // 프로덕션 환경에서는 비활성화 (Nginx에서 CORS 처리)
+// CORS는 Nginx에서 처리하므로 Spring Boot에서는 완전히 비활성화
+// @Configuration
+// @Profile("!prod")
 public class CorsConfig {
 
     @Bean
