@@ -22,6 +22,8 @@ public class QQuestion extends EntityPathBase<Question> {
 
     public static final QQuestion question = new QQuestion("question");
 
+    public final NumberPath<Integer> answerCount = createNumber("answerCount", Integer.class);
+
     public final StringPath content = createString("content");
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
