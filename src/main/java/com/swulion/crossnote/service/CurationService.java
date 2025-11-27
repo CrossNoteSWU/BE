@@ -3,6 +3,7 @@ package com.swulion.crossnote.service;
 import com.swulion.crossnote.client.CurationSourceClient;
 //import com.swulion.crossnote.client.KciClient;
 //import com.swulion.crossnote.client.NationalLibClient;
+import com.swulion.crossnote.client.KciClient;
 import com.swulion.crossnote.client.NlBookClient;
 import com.swulion.crossnote.dto.Curation.*;
 import com.swulion.crossnote.entity.Category;
@@ -49,7 +50,7 @@ public class CurationService {
     private final TerminologyService terminologyService;
 
     // 테스트용
-    //private final KciClient kciClient;
+    private final KciClient kciClient;
     private final NlBookClient nlBookClient;
 
     private final Random random = new Random(); // (랜덤 선택용)
@@ -99,7 +100,7 @@ public class CurationService {
         /* 기록 */
         // 3. 현재 실행할 배치 번호 설정 (수동 조정 필요: 1, 2, 3, 4)
         //    실제 스케줄러에서는 이 값을 DB나 캐시에서 관리하며, 다음 실행 시 +1 되어야 함
-        int currentBatchIndex = 2;
+        int currentBatchIndex = 1;
 
         int startIndex = (currentBatchIndex - 1) * CATEGORIES_PER_BATCH; // 0
         // endIndex는 현재 배치 사이즈(8)를 넘지 않도록, 전체 리스트 사이즈(29)를 넘지 않도록 설정
@@ -129,7 +130,7 @@ public class CurationService {
 //    // 테스트용 - 제미나이x. KCI
 //    @Transactional
 //    public void createDailyCurations() {
-//        log.warn("[API CLIENT TEST MODE]
+//        log.warn("[API CLIENT TEST MODE]");
 //
 //        String testQuery = "철학"; // 테스트할 검색어
 //

@@ -2,6 +2,7 @@ package com.swulion.crossnote.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.swulion.crossnote.config.ApiKeys;
 import com.swulion.crossnote.dto.Curation.CurationSourceDto;
 import com.swulion.crossnote.dto.Curation.NlBookResponseDto;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +24,10 @@ import java.util.Map;
 public class NlBookClient implements CurationSourceClient {
 
     private final RestTemplate restTemplate;
+    private final ApiKeys apiKeys;
     private final ObjectMapper objectMapper;
 
-    @Value("${api.url.national-lib}")
-    private String apiUrl;
-    @Value("${api.key.national-lib}")
-    private String apiKey;
-
+    private static final String NlBook_API_URL = "https://www.nl.go.kr/NL/search/openApi/search.do";
     private static final String IMAGE_BASE_DOMAIN = "https://cover.nl.go.kr/";
     private static final String NO_IMAGE_URL = "https://www.nl.go.kr/contents/images/search/noimage/noimage_NL1.gif";
 
@@ -67,8 +65,8 @@ public class NlBookClient implements CurationSourceClient {
         log.info("국립중앙도서관 도서 검색 요청: {}", keyword);
 
         try {
-            URI uri = UriComponentsBuilder.fromHttpUrl(apiUrl)
-                    .queryParam("key", apiKey)
+            URI uri = UriComponentsBuilder.fromHttpUrl(NlBook_API_URL)
+                    .queryParam("key", apiKeys.getNationalLib())
                     .queryParam("kwd", keyword)
                     .queryParam("srchTarget", "total")
                     .queryParam("apiType", "json")
