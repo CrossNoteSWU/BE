@@ -410,13 +410,13 @@ public class CurationService {
 
     // 2.1-1. 전체 피드 로직
     @Transactional(readOnly = true)
-    public Page<CurationFeedDto> getAllCurationFeed(Long categoryId, String curationType, String query, Pageable pageable) {
+    public Page<CurationFeedDto> getAllCurationFeed(List<Long> categoryIds, String curationType, String query, Pageable pageable) {
         // 30일 이내
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
 
         // QueryDSL 동적 쿼리 메서드 호출
         Page<Curation> resultPage = curationRepository.findDynamicFeed(
-                categoryId,
+                categoryIds,
                 curationType,
                 query,
                 thirtyDaysAgo,

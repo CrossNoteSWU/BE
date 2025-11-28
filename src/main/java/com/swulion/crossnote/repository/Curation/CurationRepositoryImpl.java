@@ -25,12 +25,12 @@ public class CurationRepositoryImpl implements CurationRepositoryCustom {
     private final QCuration curation = QCuration.curation;
 
     @Override
-    public Page<Curation> findDynamicFeed(Long categoryId, String curationTypeStr, String query, LocalDateTime thirtyDaysAgo, Pageable pageable) {
+    public Page<Curation> findDynamicFeed(List<Long> categoryIds, String curationTypeStr, String query, LocalDateTime thirtyDaysAgo, Pageable pageable) {
         List<Curation> content = jpaQueryFactory
                 .selectFrom(curation)
                 .where(
                         curation.createdAt.after(thirtyDaysAgo),
-                        categoryIdEq(categoryId),
+                        categoryIdIn(categoryIds),
                         curationTypeEq(curationTypeStr),
                         queryContains(query)
                 )
@@ -44,7 +44,7 @@ public class CurationRepositoryImpl implements CurationRepositoryCustom {
                 .from(curation)
                 .where(
                         curation.createdAt.after(thirtyDaysAgo),
-                        categoryIdEq(categoryId),
+                        categoryIdIn(categoryIds),
                         curationTypeEq(curationTypeStr),
                         queryContains(query)
                 )
@@ -54,8 +54,11 @@ public class CurationRepositoryImpl implements CurationRepositoryCustom {
     }
 
     // 분야 필터 (categoryId)
-    private BooleanExpression categoryIdEq(Long categoryId) {
-        return categoryId != null ? curation.category.categoryId.eq(categoryId) : null;
+    private BooleanExpression categoryIdIn(List<Long> categoryIds) {
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            return curation.category.categoryId.in(categoryIds);
+        }
+        return null;
     }
 
     // 유형 필터 (curationType)

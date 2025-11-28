@@ -49,7 +49,7 @@ public class CurationController {
     @GetMapping
     public ResponseEntity<Page<CurationFeedDto>> getAllCurationFeed(
             @PageableDefault(size = 10, sort = "createdAt,desc") Pageable pageable,
-            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) List<Long> categoryId,
             @RequestParam(required = false) String curationType,
             @RequestParam(required = false) String query) {
         Page<CurationFeedDto> curationFeedDtos = curationService.getAllCurationFeed(categoryId, curationType, query, pageable);
