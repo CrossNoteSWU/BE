@@ -50,6 +50,11 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu/crossnote/deploy
+            APP_DIR=${{ secrets.EC2_DEPLOY_DIR }}
+            cd "$APP_DIR"
+
+            echo "=== Files in $APP_DIR after deployment ==="
+            ls -al
+
             chmod +x deploy.sh
             ./deploy.sh
