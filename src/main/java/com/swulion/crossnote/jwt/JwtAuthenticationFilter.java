@@ -34,6 +34,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
+        String requestURI = request.getRequestURI();
+
+        // 배포: 소셜 로그인 리다이렉션 경로는 필터에서 패스
+        if (requestURI.equals("/social")){
+            log.debug("JWT 필터 패스됨: {}", requestURI);
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // 0. OPTIONS preflight 요청은 필터에서 패스 (CORS)
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             log.debug("OPTIONS preflight 요청 패스됨: {}", request.getRequestURI());
@@ -42,7 +51,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         // 1. 로그아웃 요청은 필터에서 패스 (만료된 토큰이어도 로그아웃 가능)
-        String requestURI = request.getRequestURI();
         if (requestURI.equals("/auth/logout")) {
             log.debug("JWT 필터 패스됨: {}", requestURI);
             filterChain.doFilter(request, response);
