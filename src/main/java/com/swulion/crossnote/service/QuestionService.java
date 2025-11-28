@@ -255,7 +255,7 @@ public class QuestionService {
 
     /* Question 검색 */
     public List<QuestionResponseDto> searchQuestion(QuestionSearchDto questionSearchDto){
-        List<Question> questions = questionRepositoryImpl.findWithKeyword(questionSearchDto.getCategoryId(), questionSearchDto.getKeyword());
+        List<Question> questions = questionRepositoryImpl.findWithKeyword(questionSearchDto.getCategoryIds(), questionSearchDto.getKeyword());
         List<QuestionResponseDto> questionResponseDtos = new ArrayList<>();
         for(Question question : questions){
             List<QuestionCategory> questionCategories = questionCategoryRepository.findAllByQuestionId(question);

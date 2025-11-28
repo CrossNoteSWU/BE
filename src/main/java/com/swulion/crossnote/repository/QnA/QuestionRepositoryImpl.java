@@ -20,13 +20,13 @@ public class QuestionRepositoryImpl {
     private final QQuestion qQuestion = QQuestion.question;
     private final QQuestionCategory qQuestionCategory = QQuestionCategory.questionCategory;
 
-    public List<Question> findWithKeyword(Long categoryId ,String keyword) {
+    public List<Question> findWithKeyword(List<Long> categoryIds ,String keyword) {
         List<Question> questions = jpaQueryFactory
                 .selectFrom(qQuestion)
                 .leftJoin(qQuestionCategory)
                 .on(qQuestion.questionId.eq(qQuestionCategory.questionId.questionId))
                 .where(
-                        categoryIdEqual(categoryId),
+                        categoryIdIn(categoryIds),
                         queryContains(keyword)
                 )
                 .fetch();
@@ -36,6 +36,13 @@ public class QuestionRepositoryImpl {
 
     private BooleanExpression categoryIdEqual(Long categoryId) {
         return categoryId != null ? qQuestionCategory.categoryId.categoryId.eq(categoryId) : null;
+    }
+
+    private BooleanExpression categoryIdIn(List<Long> categoryIds){
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            return qQuestionCategory.categoryId.categoryId.in(categoryIds);
+        }
+        return null;
     }
 
     private BooleanExpression queryContains(String keyword) {

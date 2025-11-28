@@ -18,18 +18,25 @@ public class ColumnRepositoryImpl {
     private final QColumnCategory qColumnCategory = QColumnCategory.columnCategory;
     private final QColumnEntity qColumnEntity = QColumnEntity.columnEntity;
 
-    public List<ColumnEntity> findWithKeyword(Long categoryId, String keyword) {
+    public List<ColumnEntity> findWithKeyword(List<Long> categoryIds, String keyword) {
         List<ColumnEntity> columnEntities = jpaQueryFactory
                 .selectFrom(qColumnEntity)
                 .leftJoin(qColumnCategory).on(qColumnEntity.columnId.eq(qColumnCategory.columnId.columnId))
                 .where(
-                        categoryIdEqual(categoryId)
+                        categoryIdIn(categoryIds)
                 ).fetch();
         return columnEntities;
     }
 
     private BooleanExpression categoryIdEqual(Long categoryId) {
         return categoryId != null ? qColumnCategory.categoryId.categoryId.eq(categoryId) : null;
+    }
+
+    private BooleanExpression categoryIdIn(List<Long> categoryIds) {
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            return qColumnCategory.categoryId.categoryId.in(categoryIds);
+        }
+        return null;
     }
 
     private BooleanExpression queryContains(String keyword) {
