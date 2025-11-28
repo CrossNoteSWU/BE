@@ -347,7 +347,7 @@ public class ColumnService {
 
     /* Column 검색 */
     public List<ColumnReadResponseDto> searchColumn(ColumnSearchDto columnSearchDto) {
-        List<ColumnEntity> columnEntities = columnRepositoryImpl.findWithKeyword(columnSearchDto.getCategoryId(), columnSearchDto.getKeyword());
+        List<ColumnEntity> columnEntities = columnRepositoryImpl.findWithKeyword(columnSearchDto.getCategoryIds(), columnSearchDto.getKeyword());
         List<ColumnReadResponseDto> columnReadResponseDtos = new ArrayList<>();
         for(ColumnEntity columnEntity : columnEntities){
             List<ColumnCategory> columnCategories = columnCategoryRepository.findByColumnId(columnEntity);
