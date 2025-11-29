@@ -20,4 +20,7 @@ public interface CurationRepository extends JpaRepository<Curation, Long>, Curat
     );
     // 베스트 칼럼 중복 등록 방지 (원본 칼럼 ID 기준)
     boolean existsByOriginalColumnIdAndCurationType(Long originalColumnId, CurationType curationType);
+
+    // 사용자 선호 카테고리 중, 특정 시점(오늘 0시) 이후 생성된 것 조회
+    List<Curation> findByCategory_CategoryIdInAndCreatedAtAfter(List<Long> categoryIds, LocalDateTime createdAt);
 }

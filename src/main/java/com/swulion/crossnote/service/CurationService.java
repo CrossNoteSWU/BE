@@ -24,7 +24,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,134 +55,55 @@ public class CurationService {
 
     private final Random random = new Random(); // (랜덤 선택용)
 
-    // 큐레이션 생성 프로세스에서 바라던 - 29*4=116개의 큐레이션 생성 (스케쥴 적용 필요)
-//    @Transactional
-//    public void createDailyCurations() {
-//        log.info("데일리 큐레이션 생성 작업 시작 (29개 분야 × 4개)");
-//
-//        List<Category> categories = categoryRepository.findByParentCategoryIdIsNotNull();
-//        if (categories.isEmpty()) {
-//            log.warn("DB에 생성 가능한 카테고리가 없습니다.");
-//            return;
-//        }
-//
-//        for (Category category : categories) {
-//            // Level A (LEVEL_1)
-//            createInsightCuration(category, CurationLevel.LEVEL_1);
-//            createCrossNoteCuration(category, CurationLevel.LEVEL_1);
-//
-//            // Level B (LEVEL_2)
-//            createInsightCuration(category, CurationLevel.LEVEL_2);
-//            createCrossNoteCuration(category, CurationLevel.LEVEL_2);
-//        }
-//
-//        log.info("데일리 큐레이션 생성 작업 완료.");
-//    }
-
-    // 현실적인 대안 - 4번에 걸쳐서 큐레이션 생성하기 (API 호출량 제한 이유)
+    /*
+     * 매일 새벽 1시, 29개 카테고리에 대해 총 116개의 큐레이션을 자동 생성.
+     * 명세: 카테고리당 4개 (Insight L1/L2, CrossNote L1/L2)
+     */
+    // 큐레이션 자동 생성
+    @Scheduled(cron = "0 0 1 * * *") // 매일 01:00:00 실행
     @Transactional
-    @Async
-    public void createDailyCurations() {
-        log.info("데일리 큐레이션 생성 작업 시작 (분산 배치 실행)");
+    public void scheduleDailyCurationCreation() {
+        log.info("=== [Daily Batch] 큐레이션 자동 생성 시작 (Total Target: 116) ===");
 
-        // 1. 모든 하위 카테고리 (29개)를 조회
         List<Category> allCategories = categoryRepository.findByParentCategoryIdIsNotNull();
-
         if (allCategories.isEmpty()) {
-            log.warn("DB에 생성 가능한 카테고리가 없습니다.");
+            log.warn("생성 가능한 카테고리가 없습니다.");
             return;
         }
 
-        // 2. 분할 계산: 29개 카테고리를 4개의 배치로 나눔
-        final int BATCH_COUNT = 4;
-        // 29 / 4 = 7.25 이므로 한 배치당 최대 8개 카테고리를 처리
-        final int CATEGORIES_PER_BATCH = (int) Math.ceil((double) allCategories.size() / BATCH_COUNT); // 8
+        int successCount = 0;
 
-        /* 기록 */
-        // 3. 현재 실행할 배치 번호 설정 (수동 조정 필요: 1, 2, 3, 4)
-        //    실제 스케줄러에서는 이 값을 DB나 캐시에서 관리하며, 다음 실행 시 +1 되어야 함
-        int currentBatchIndex = 1;
+        // 29개 카테고리 순회
+        for (Category category : allCategories) {
+            try {
+                log.info(">> Processing Category: {}", category.getCategoryName());
 
-        int startIndex = (currentBatchIndex - 1) * CATEGORIES_PER_BATCH; // 0
-        // endIndex는 현재 배치 사이즈(8)를 넘지 않도록, 전체 리스트 사이즈(29)를 넘지 않도록 설정
-        int endIndex = Math.min(currentBatchIndex * CATEGORIES_PER_BATCH, allCategories.size());
+                // 1. Insight (Level 1 & 2)
+                createInsightCuration(category, CurationLevel.LEVEL_1);
+                createInsightCuration(category, CurationLevel.LEVEL_2);
 
-        // 4. 현재 배치에 해당하는 카테고리만 추출
-        //    예: allCategories.subList(0, 8) -> 8개 카테고리만 포함
-        List<Category> categoriesToProcess = allCategories.subList(startIndex, endIndex);
+                // 2. CrossNote (Level 1 & 2)
+                createCrossNoteCuration(category, CurationLevel.LEVEL_1);
+                createCrossNoteCuration(category, CurationLevel.LEVEL_2);
 
-        log.warn("=== [TEST] 현재 배치({}/{}): {}개 카테고리 (총 {}개 큐레이션) 생성 시작 ===",
-                currentBatchIndex, BATCH_COUNT, categoriesToProcess.size(), categoriesToProcess.size() * 4);
+                successCount += 4;
 
-        // 5. 선택된 카테고리에 대해서만 큐레이션 생성
-        for (Category category : categoriesToProcess) {
-            // Level A (LEVEL_1)
-            createInsightCuration(category, CurationLevel.LEVEL_1);
-            createCrossNoteCuration(category, CurationLevel.LEVEL_1);
+                // GeminiService 내부에 2초 딜레이가 있지만,
+                // KCI/국립중앙도서관 등 소스 API의 부하 분산을 위해 카테고리 간 추가 텀을 둠
+                Thread.sleep(3000);
 
-            // Level B (LEVEL_2)
-            createInsightCuration(category, CurationLevel.LEVEL_2);
-            createCrossNoteCuration(category, CurationLevel.LEVEL_2);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                log.error("스케줄러 인터럽트 발생", ie);
+                break;
+            } catch (Exception e) {
+                // 한 카테고리가 실패해도 나머지는 계속 진행
+                log.error("카테고리[{}] 생성 중 오류 발생: {}", category.getCategoryName(), e.getMessage());
+            }
         }
 
-        log.info("데일리 큐레이션 생성 작업 완료.");
+        log.info("=== [Daily Batch] 큐레이션 생성 완료. 생성된 수량(예상): {} ===", successCount);
     }
-
-//    // 테스트용 - 제미나이x. KCI
-//    @Transactional
-//    public void createDailyCurations() {
-//        log.warn("[API CLIENT TEST MODE]");
-//
-//        String testQuery = "철학"; // 테스트할 검색어
-//
-//        // KCI Client 테스트
-//        try {
-//            log.info("[API TEST] KciClient.fetchSource('{}') 호출 시도...", testQuery);
-//            CurationSourceDto kciResult = kciClient.fetchSource(testQuery);
-//
-//            if (kciResult != null && kciResult.getOriginalText() != null) {
-//                log.info("[API TEST] KCI Client 성공!! Title: {}", kciResult.getOriginalText().substring(0, Math.min(kciResult.getOriginalText().length(), 70)));
-//            } else {
-//                log.warn("[API TEST] KCI Client가 null을 반환했습니다. (로그 확인 필요)");
-//            }
-//        } catch (Exception e) {
-//            log.error("[API TEST] KCI Client 호출 중 예외 발생", e);
-//        }
-//
-//        log.warn("[API CLIENT TEST MODE] 테스트 완료.");
-//    }
-
-//    // 테스트용 - 제미나이x. 국립중앙도서관
-//    @Transactional
-//    public void createDailyCurations() {
-//        log.warn("[API CLIENT TEST MODE] 국립중앙도서관 API 테스트 시작");
-//
-//        String testQuery = "인공지능"; // 테스트할 검색어 (결과가 많을 법한 단어 추천)
-//
-//        try {
-//            log.info("[API TEST] NlkApiClient.searchBooks('{}') 호출 시도...", testQuery);
-//
-//            // 1. API 호출
-//            List<NlBookResponseDto> results = nlBookClient.searchBooks(testQuery);
-//
-//            // 2. 결과 확인
-//            if (results != null && !results.isEmpty()) {
-//                log.info("[API TEST] 성공!! 총 {}건의 데이터를 가져왔습니다.", results.size());
-//
-//                // 첫 번째 책 정보만 로그로 찍어보기
-//                NlBookResponseDto firstBook = results.get(0);
-//                log.info("   - 첫 번째 책 제목: {}", firstBook.getTitle());
-//                log.info("   - 첫 번째 책 저자: {}", firstBook.getAuthor());
-//                log.info("   - 첫 번째 책 출판사: {}", firstBook.getPublisher());
-//
-//            } else {
-//                log.warn("[API TEST] 결과가 비어있습니다 (0건). (검색어가 없거나, 파싱에 실패했을 수 있음)");
-//            }
-//
-//        } catch (Exception e) {
-//            log.error("[API TEST] NlkApiClient 호출 중 치명적 에러 발생", e);
-//        }
-//    }
 
     // '인사이트' 큐레이션 생성
     private void createInsightCuration(Category category, CurationLevel level) {
@@ -257,93 +177,98 @@ public class CurationService {
     // 2.1. 개인화 피드 로직
     @Transactional(readOnly = true)
     public List<CurationFeedDto> getPersonalizedFeed(User user) {
-        // 1. 사용자의 관심/전문 분야 ID 목록 조회
+        // 1. 사용자 관심 분야 ID
         List<Long> preferenceCategoryIds = userPreferenceRepository.findByUser(user)
                 .stream()
                 .map(pref -> pref.getCategory().getCategoryId())
                 .collect(Collectors.toList());
 
-        // 2. 사용자의 레벨 조회
-        CurationLevel userLevel = user.getCurationLevel(); //
-
-        // 3. 오늘 0시 0분
-        ZoneId zoneId = ZoneId.of("UTC");
+        // 2. '오늘(00:00 이후)' 생성된 큐레이션 중 관심 분야 필터링
+        ZoneId zoneId = ZoneId.of("Asia/Seoul");
         LocalDateTime startOfToday = LocalDate.now(zoneId).atStartOfDay();
 
-        // 4. 사용자의 선호 분야/레벨에 맞는 '오늘 생성된' 큐레이션 조회
         List<Curation> candidates = curationRepository
-                .findByCategory_CategoryIdInAndCurationLevelAndCreatedAtAfter(
-                        preferenceCategoryIds,
-                        userLevel,
-                        startOfToday
-                );
+                .findByCategory_CategoryIdInAndCreatedAtAfter(preferenceCategoryIds, startOfToday);
 
-        // 5. 유형별로 분리하고, 우선순위 2 기준으로 정렬 (재할당 로직을 위한 준비)
-        Map<CurationType, List<Curation>> groupedCandidates = candidates.stream()
-                .sorted(Comparator.comparing(Curation::getCreatedAt).reversed())
-                .collect(Collectors.groupingBy(
-                        Curation::getCurationType,
-                        LinkedHashMap::new, // 순서 유지를 위해 LinkedHashMap 사용
-                        Collectors.toList()
-                ));
+        // 3. 유형별 그룹핑
+        Map<CurationType, List<Curation>> grouped = candidates.stream()
+                .collect(Collectors.groupingBy(Curation::getCurationType));
 
-        // 최종 믹스 리스트
+        List<Curation> cnList = grouped.getOrDefault(CurationType.CROSSNOTE, new ArrayList<>());
+        List<Curation> inList = grouped.getOrDefault(CurationType.INSIGHT, new ArrayList<>());
+        List<Curation> bcList = grouped.getOrDefault(CurationType.BEST_COLUMN, new ArrayList<>());
+
+        // 그룹 내 최신순 정렬
+        sortListByLatest(cnList);
+        sortListByLatest(inList);
+        sortListByLatest(bcList);
+
+        // 4. 할당 및 혼합 로직 (목표: CN 2, IN 2, BC 2)
         List<Curation> finalMix = new ArrayList<>();
+        int targetPerType = 2;
+        int totalTarget = 6;
 
-        // 6. 확보 및 재할당 로직 구현 (할당량: CN 2, IN 2, BC 2)
-        int targetCN = 2;
-        int targetIN = 2;
-        int targetBC = 2;
-        int totalTarget = targetCN + targetIN + targetBC;
+        // (1) 기본 할당량 확보
+        List<Curation> selectedCN = pickTop(cnList, targetPerType);
+        List<Curation> selectedIN = pickTop(inList, targetPerType);
+        List<Curation> selectedBC = pickTop(bcList, targetPerType);
 
-        // 초기 확보
-        List<Curation> cnList = groupedCandidates.getOrDefault(CurationType.CROSSNOTE, Collections.emptyList());
-        List<Curation> inList = groupedCandidates.getOrDefault(CurationType.INSIGHT, Collections.emptyList());
-        List<Curation> bcList = groupedCandidates.getOrDefault(CurationType.BEST_COLUMN, Collections.emptyList());
+        finalMix.addAll(selectedCN);
+        finalMix.addAll(selectedIN);
+        finalMix.addAll(selectedBC);
 
-        // 확보된 초기 수량 (잔여분 계산을 위해 확보 후 리스트에서 제거)
-        int securedCN = Math.min(cnList.size(), targetCN);
-        int securedIN = Math.min(inList.size(), targetIN);
-        int securedBC = Math.min(bcList.size(), targetBC);
-
-        finalMix.addAll(cnList.subList(0, securedCN));
-        finalMix.addAll(inList.subList(0, securedIN));
-        finalMix.addAll(bcList.subList(0, securedBC));
-
+        // (2) 부족분 재할당 (Priority: CN > IN)
         int needed = totalTarget - finalMix.size();
 
-        // 재할당 시작 (최대 6개가 될 때까지)
-        // 재할당 우선순위: CN > IN
         if (needed > 0) {
-            // 잔여분 리스트 생성 (초기 확보된 콘텐츠는 제외)
-            List<Curation> remainingCN = cnList.subList(securedCN, cnList.size());
-            List<Curation> remainingIN = inList.subList(securedIN, inList.size());
-            // BC는 재할당 우선순위가 낮으므로, 잔여분을 사용하지 않고 CN/IN만 사용
+            // 이미 선택된 것을 제외한 잔여 리스트
+            List<Curation> remainCN = getRemaining(cnList, selectedCN);
+            List<Curation> remainIN = getRemaining(inList, selectedIN);
 
-            // 1. CN 잔여분을 우선 사용
-            for (int i = 0; i < remainingCN.size() && needed > 0; i++) {
-                finalMix.add(remainingCN.get(i));
+            // 1순위: 크로스노트에서 충원
+            for (Curation c : remainCN) {
+                if (needed == 0) break;
+                finalMix.add(c);
                 needed--;
             }
-
-            // 2. IN 잔여분 사용
-            for (int i = 0; i < remainingIN.size() && needed > 0; i++) {
-                finalMix.add(remainingIN.get(i));
+            // 2순위: 인사이트에서 충원
+            for (Curation c : remainIN) {
+                if (needed == 0) break;
+                finalMix.add(c);
                 needed--;
             }
         }
 
-        // 7. 최종 믹스에 대해 우선순위 1 & 2 정렬 (혹시 재할당된 콘텐츠 순서가 꼬였을 경우 대비)
-        finalMix.sort(Comparator
-                .comparing((Curation c) -> getPriority(c.getCurationType()))
-                .thenComparing(Curation::getCreatedAt).reversed()
-        );
-
-        // 8. 최대 6개로 제한하여 반환 (needed 로직으로 6개 내외가 되지만, 안전장치)
+        // 5. 최종 정렬 (Priority 1: Type, Priority 2: Latest)
+        // Type Priority: CrossNote(1) > Insight(2) > BestColumn(3)
         return finalMix.stream()
-                .limit(totalTarget)
+                .sorted(Comparator
+                        .comparingInt(this::getTypePriority) // 1차 정렬: 타입
+                        .thenComparing(Curation::getCreatedAt, Comparator.reverseOrder()) // 2차 정렬: 최신순
+                )
                 .map(CurationFeedDto::new)
                 .collect(Collectors.toList());
+    }
+
+    private void sortListByLatest(List<Curation> list) {
+        list.sort(Comparator.comparing(Curation::getCreatedAt).reversed());
+    }
+
+    private List<Curation> pickTop(List<Curation> source, int limit) {
+        return source.stream().limit(limit).collect(Collectors.toList());
+    }
+
+    private List<Curation> getRemaining(List<Curation> source, List<Curation> picked) {
+        List<Curation> remaining = new ArrayList<>(source);
+        remaining.removeAll(picked);
+        return remaining;
+    }
+
+    private int getTypePriority(Curation c) {
+        if (c.getCurationType() == CurationType.CROSSNOTE) return 1;
+        if (c.getCurationType() == CurationType.INSIGHT) return 2;
+        if (c.getCurationType() == CurationType.BEST_COLUMN) return 3;
+        return 99;
     }
 
     // 크로스할 카테고리를 찾는 헬퍼 메서드
@@ -360,16 +285,6 @@ public class CurationService {
 
         Collections.shuffle(allCategories);
         return allCategories.get(0);
-    }
-
-    // 우선순위 정렬을 위한 헬퍼 메서드
-    private int getPriority(CurationType type) {
-        switch (type) {
-            case CROSSNOTE: return 1;
-            case INSIGHT: return 2;
-            case BEST_COLUMN: return 3;
-            default: return 99;
-        }
     }
 
     // 클라이언트 순회하며 소스를 확보하는 헬퍼 메서드 - 원문 확보 로직 강화
