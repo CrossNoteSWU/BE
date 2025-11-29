@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,6 +82,7 @@ public class CurationService {
 
     // 현실적인 대안 - 4번에 걸쳐서 큐레이션 생성하기 (API 호출량 제한 이유)
     @Transactional
+    @Async
     public void createDailyCurations() {
         log.info("데일리 큐레이션 생성 작업 시작 (분산 배치 실행)");
 
@@ -492,5 +494,15 @@ public class CurationService {
 
             return new CurationToggleResponseDto(true, curation.getScrapCount());
         }
+    }
+
+    // 초기화용
+    @Transactional
+    public void deleteAllCurations() {
+        log.warn("큐레이션 전체 삭제 작업 시작");
+        likeRepository.deleteAllInBatch();
+        scrapRepository.deleteAllInBatch();
+
+        curationRepository.deleteAllInBatch();
     }
 }
