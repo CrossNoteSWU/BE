@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @RestController
@@ -105,9 +106,17 @@ public class CurationController {
     */
     @PostMapping("/test/generate")
     public String manualGenerateCuration() {
-        // 스케줄러 메서드 강제로 호출
-        curationService.scheduleDailyCurationCreation();
-        return "큐레이션 생성 작업 백그라운드에서 시작. 로그를 확인하세요.";
+        log.warn("큐레이션 생성 강제 시작");
+
+        // 비동기 처리: 별도의 스레드에게 일을 시키고, 이 메서드는 즉시 리턴
+        CompletableFuture.runAsync(() -> {
+            try {
+                curationService.scheduleDailyCurationCreation();
+            } catch (Exception e) {
+                log.error("수동 생성 중 에러 발생", e);
+            }
+        });
+        return "큐레이션 생성 작업이 백그라운드에서 시작 (완료까지 약 5~6분 소요, 로그 확인 필요)";
     }
 
     // 초기화용. 큐레이션 및 관련 데이터 지우기 - 큐레이션 담당자만 사용!!
