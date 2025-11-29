@@ -100,31 +100,14 @@ public class CurationController {
     }
 
     /*
-     [테스트용] 큐레이션 생성 스케줄러를 수동으로 실행
-     [POST] /curation/test/run-batch
-     */
-//    @PostMapping("/test/run-batch")
-//    public ResponseEntity<String> runDailyCurationBatch() {
-//        log.warn("=== [TEST] 수동 큐레이션 생성 작업을 시작합니다. ===");
-//        try {
-//            // (CurationService의 스케줄링 메서드를 직접 호출)
-//            curationService.createDailyCurations();
-//            log.warn("=== [TEST] 수동 큐레이션 생성 작업 완료. ===");
-//            return ResponseEntity.ok("수동 큐레이션 배치 작업 완료.");
-//
-//        } catch (Exception e) {
-//            log.error("=== [TEST] 수동 큐레이션 생성 중 오류 발생 ===", e);
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .body("배치 작업 실패: " + e.getMessage());
-//        }
-//    }
-    // 비동기 - 바로 200 OK 보내고 서버에서만 실행
-    @PostMapping("/test/run-batch")
-    public ResponseEntity<String> runDailyCurationBatch() {
-        log.info("=== [TEST] 수동 큐레이션 생성 요청을 받음. (백그라운드 실행 시작) ===");
-        curationService.createDailyCurations();
-
-        return ResponseEntity.ok("배치 작업 백그라운드 시작");
+     [테스트용] 큐레이션 116개 강제 생성 (배치 수동 실행)
+     [POST] /curation/test/generate
+    */
+    @PostMapping("/test/generate")
+    public String manualGenerateCuration() {
+        // 스케줄러 메서드 강제로 호출
+        curationService.scheduleDailyCurationCreation();
+        return "큐레이션 생성 작업 백그라운드에서 시작. 로그를 확인하세요.";
     }
 
     // 초기화용. 큐레이션 및 관련 데이터 지우기 - 큐레이션 담당자만 사용!!
