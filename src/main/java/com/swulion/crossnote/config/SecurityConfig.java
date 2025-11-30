@@ -52,6 +52,7 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/" , "/social" , "/login", "/login/**").permitAll() // 루트 경로 허용
                         .requestMatchers("/", "/social", "/index.html", "/static/**").permitAll() // 루트 경로 허용
                         .requestMatchers("/css/**", "/js/**", "/media/**",
                                 "/favicon.ico", "/asset-manifest.json",
