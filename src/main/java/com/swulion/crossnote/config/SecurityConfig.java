@@ -53,6 +53,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/" , "/social" , "/login", "/login/**").permitAll() // 루트 경로 허용
+                        .requestMatchers("/", "/social", "/index.html", "/static/**").permitAll() // 루트 경로 허용
+                        .requestMatchers("/css/**", "/js/**", "/media/**",
+                                "/favicon.ico", "/asset-manifest.json",
+                                "/manifest.json", "/logo*.png", "/robots.txt").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/curation").permitAll() // 큐레이션 목록 조회는 허용
                         .requestMatchers("/curation/**").authenticated() // 그 외 큐레이션은 인증 필요

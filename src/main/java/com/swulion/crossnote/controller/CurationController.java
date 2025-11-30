@@ -14,11 +14,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @RestController
@@ -99,22 +101,33 @@ public class CurationController {
     }
 
     /*
-     [테스트용] 큐레이션 생성 스케줄러를 수동으로 실행
-     [POST] /curation/test/run-batch
-     */
-    @PostMapping("/test/run-batch")
-    public ResponseEntity<String> runDailyCurationBatch() {
-        log.warn("=== [TEST] 수동 큐레이션 생성 작업을 시작합니다. ===");
-        try {
-            // (CurationService의 스케줄링 메서드를 직접 호출)
-            curationService.createDailyCurations();
-            log.warn("=== [TEST] 수동 큐레이션 생성 작업 완료. ===");
-            return ResponseEntity.ok("수동 큐레이션 배치 작업 완료.");
+     [테스트용] 큐레이션 116개 강제 생성 (배치 수동 실행)
+     [POST] /curation/test/generate
+    */
+    @PostMapping("/test/generate")
+    public String manualGenerateCuration() {
+        log.warn("큐레이션 생성 강제 시작");
 
+        // 비동기 처리: 별도의 스레드에게 일을 시키고, 이 메서드는 즉시 리턴
+        CompletableFuture.runAsync(() -> {
+            try {
+                curationService.scheduleDailyCurationCreation();
+            } catch (Exception e) {
+                log.error("수동 생성 중 에러 발생", e);
+            }
+        });
+        return "큐레이션 생성 작업이 백그라운드에서 시작 (완료까지 약 5~6분 소요, 로그 확인 필요)";
+    }
+
+    // 초기화용. 큐레이션 및 관련 데이터 지우기 - 큐레이션 담당자만 사용!!
+    @DeleteMapping("/test/delete-all")
+    public ResponseEntity<String> deleteAllCurations() {
+        try {
+            curationService.deleteAllCurations();
+            return ResponseEntity.ok("큐레이션 삭제");
         } catch (Exception e) {
-            log.error("=== [TEST] 수동 큐레이션 생성 중 오류 발생 ===", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("배치 작업 실패: " + e.getMessage());
+            log.error("초기화 실패", e);
+            return ResponseEntity.status(500).body("삭제 실패: " + e.getMessage());
         }
     }
 
