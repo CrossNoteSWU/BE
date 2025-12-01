@@ -25,7 +25,7 @@
   </tr>
   <tr width="100%">
   <td  align="center"><img src="https://github.com/user-attachments/assets/95711361-1b07-47ee-b902-20f12113b057" alt="befbedf87e51f5b02aac8b882ada60fd-sticker"  border="0" width="90px"/></a></td>
-  <td  align="center"><a href="https://imgbb.com/"><img src="https://github.com/user-attachments/assets/a4c534bc-2c06-4909-8106-9e5d4b4d6067" alt="befbedf87e51f5b02aac8b882ada60fd-sticker"  border="0" width="90px"/></a></td>
+  <td  align="center"><img src="https://github.com/user-attachments/assets/fa9a7e35-834a-4f9e-af59-a5762dbe0a4d" border="0" width="90px"/></a></td>
   <td  align="center"><a href="https://imgbb.com/"><img src="https://github.com/user-attachments/assets/a4c534bc-2c06-4909-8106-9e5d4b4d6067" alt="befbedf87e51f5b02aac8b882ada60fd-sticker"  border="0" width="90px"/></a></td>
   </tr>
       <tr width="100%">
