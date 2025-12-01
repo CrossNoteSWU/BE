@@ -22,13 +22,13 @@ public class CurationDetailDto {
     private long likeCount;
     private long scrapCount;
     private boolean isLiked;
-    private boolean isScrapped;
+    private boolean isScraped;
 
     // 베스트 칼럼 추가
     private Long originalColumnId;
     private boolean isBestColumn;
 
-    public CurationDetailDto(Curation curation, boolean isLiked, boolean isScrapped) {
+    public CurationDetailDto(Curation curation, boolean isLiked, boolean isScraped) {
         this.curationId = curation.getId();
         this.title = curation.getTitle();
         this.description = curation.getDescription();
@@ -47,7 +47,7 @@ public class CurationDetailDto {
         this.likeCount = curation.getLikeCount();
         this.scrapCount = curation.getScrapCount();
         this.isLiked = isLiked;
-        this.isScrapped = isScrapped;
+        this.isScraped = isScraped;
 
         this.isBestColumn = curation.getCurationType() == CurationType.BEST_COLUMN;
         this.originalColumnId = curation.getOriginalColumnId();
