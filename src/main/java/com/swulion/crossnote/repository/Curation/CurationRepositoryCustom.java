@@ -12,7 +12,7 @@ public interface CurationRepositoryCustom {
 
     Page<Curation> findDynamicFeed(
             List<Long> categoryIds,
-            String curationType,
+            List<String> curationType,
             String query,
             LocalDateTime thirtyDaysAgo,
             Pageable pageable

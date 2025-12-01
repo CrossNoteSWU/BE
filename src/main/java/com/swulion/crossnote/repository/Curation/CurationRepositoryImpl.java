@@ -25,13 +25,13 @@ public class CurationRepositoryImpl implements CurationRepositoryCustom {
     private final QCuration curation = QCuration.curation;
 
     @Override
-    public Page<Curation> findDynamicFeed(List<Long> categoryIds, String curationTypeStr, String query, LocalDateTime thirtyDaysAgo, Pageable pageable) {
+    public Page<Curation> findDynamicFeed(List<Long> categoryIds, List<String> curationTypeStrs, String query, LocalDateTime thirtyDaysAgo, Pageable pageable) {
         List<Curation> content = jpaQueryFactory
                 .selectFrom(curation)
                 .where(
                         curation.createdAt.after(thirtyDaysAgo),
                         categoryIdIn(categoryIds),
-                        curationTypeEq(curationTypeStr),
+                        curationTypeIn(curationTypeStrs),
                         queryContains(query)
                 )
                 .offset(pageable.getOffset())
@@ -45,7 +45,7 @@ public class CurationRepositoryImpl implements CurationRepositoryCustom {
                 .where(
                         curation.createdAt.after(thirtyDaysAgo),
                         categoryIdIn(categoryIds),
-                        curationTypeEq(curationTypeStr),
+                        curationTypeIn(curationTypeStrs),
                         queryContains(query)
                 )
                 .fetchOne();
@@ -62,16 +62,27 @@ public class CurationRepositoryImpl implements CurationRepositoryCustom {
     }
 
     // 유형 필터 (curationType)
-    private BooleanExpression curationTypeEq(String curationTypeStr) {
-        if (StringUtils.hasText(curationTypeStr)) {
-            try {
-                CurationType type = CurationType.valueOf(curationTypeStr.toUpperCase());
-                return curation.curationType.eq(type);
-            } catch (IllegalArgumentException e) {
+    private BooleanExpression curationTypeIn(List<String> curationTypeStrs) {
+        if(curationTypeStrs == null || curationTypeStrs.isEmpty()){
+            return null;
+        }
+        try {
+            // 리스트 내부에 콤마가 있을 수도 있으므로 모두 split하여 flat하게 만듦
+            List<CurationType> types = curationTypeStrs.stream()
+                    .flatMap(s -> List.of(s.split(",")).stream())
+                    .map(String::trim)
+                    .filter(StringUtils::hasText)
+                    .map(CurationType::valueOf)
+                    .toList();
+
+            if (types.isEmpty()) {
                 return null;
             }
+            return curation.curationType.in(types);
+
+        } catch (IllegalArgumentException e) {
+            return null;
         }
-        return null;
     }
 
     // 검색어 필터 (제목 or 내용)

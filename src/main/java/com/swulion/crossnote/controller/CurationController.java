@@ -39,6 +39,10 @@ public class CurationController {
     public ResponseEntity<List<CurationFeedDto>> getPersonilzedFeed(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         User user = userDetails.getUser();
         List<CurationFeedDto> curationFeedDtos = curationService.getPersonalizedFeed(user);
         return ResponseEntity.ok(curationFeedDtos);
@@ -52,9 +56,16 @@ public class CurationController {
     public ResponseEntity<Page<CurationFeedDto>> getAllCurationFeed(
             @PageableDefault(size = 10, sort = "createdAt,desc") Pageable pageable,
             @RequestParam(required = false) List<Long> categoryId,
-            @RequestParam(required = false) String curationType,
-            @RequestParam(required = false) String query) {
-        Page<CurationFeedDto> curationFeedDtos = curationService.getAllCurationFeed(categoryId, curationType, query, pageable);
+            @RequestParam(required = false) List<String> curationType,
+            @RequestParam(required = false) String query,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        User user = userDetails.getUser();
+        Page<CurationFeedDto> curationFeedDtos = curationService.getAllCurationFeed(categoryId, curationType, query, pageable, user);
         return ResponseEntity.ok(curationFeedDtos);
     }
 
@@ -66,6 +77,10 @@ public class CurationController {
     public ResponseEntity<CurationDetailDto> getCurationDetail(
             @PathVariable Long curationId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         User user = userDetails.getUser();
         CurationDetailDto curationDetailDtos = curationService.getCurationDetail(curationId, user);
@@ -81,6 +96,10 @@ public class CurationController {
             @PathVariable Long curationId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         User user = userDetails.getUser();
         CurationToggleResponseDto responseDtos = curationService.toggleCurationLike(curationId, user);
         return ResponseEntity.ok(responseDtos);
@@ -94,6 +113,10 @@ public class CurationController {
     public ResponseEntity<CurationToggleResponseDto> toggleCurationScrap(
             @PathVariable Long curationId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         User user = userDetails.getUser();
         CurationToggleResponseDto responseDtos = curationService.toggleCurationScrap(curationId, user);
@@ -120,16 +143,16 @@ public class CurationController {
     }
 
     // 초기화용. 큐레이션 및 관련 데이터 지우기 - 큐레이션 담당자만 사용!!
-    @DeleteMapping("/test/delete-all")
-    public ResponseEntity<String> deleteAllCurations() {
-        try {
-            curationService.deleteAllCurations();
-            return ResponseEntity.ok("큐레이션 삭제");
-        } catch (Exception e) {
-            log.error("초기화 실패", e);
-            return ResponseEntity.status(500).body("삭제 실패: " + e.getMessage());
-        }
-    }
+//    @DeleteMapping("/test/delete-all")
+//    public ResponseEntity<String> deleteAllCurations() {
+//        try {
+//            curationService.deleteAllCurations();
+//            return ResponseEntity.ok("큐레이션 삭제");
+//        } catch (Exception e) {
+//            log.error("초기화 실패", e);
+//            return ResponseEntity.status(500).body("삭제 실패: " + e.getMessage());
+//        }
+//    }
 
     /*
      [테스트용] 베스트 칼럼 선정 로직을 수동으로 실행하는 API 추가
