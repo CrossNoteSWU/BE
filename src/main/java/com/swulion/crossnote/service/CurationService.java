@@ -361,18 +361,18 @@ public class CurationService {
                 .orElseThrow(() -> new EntityNotFoundException("큐레이션을 찾을 수 없습니다. ID: " + curationId));
 
         boolean isLiked = false;
-        boolean isScrapped = false;
+        boolean isScraped = false;
 
         if (user != null) {
             isLiked = likeRepository.existsByUserAndTargetTypeAndTargetId(
                     user, ScrapTargetType.CURATION, curationId
             );
 
-            isScrapped = scrapRepository.existsByUserAndTargetTypeAndTargetId(
+            isScraped = scrapRepository.existsByUserAndTargetTypeAndTargetId(
                     user, ScrapTargetType.CURATION, curationId
             );
         }
-        return new CurationDetailDto(curation, isLiked, isScrapped);
+        return new CurationDetailDto(curation, isLiked, isScraped);
     }
 
     // 2.2. 큐레이션 좋아요 토글 로직
