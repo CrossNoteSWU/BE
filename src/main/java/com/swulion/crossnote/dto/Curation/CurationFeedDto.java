@@ -20,7 +20,11 @@ public class CurationFeedDto {
     // 베스트 칼럼 여부
     private boolean isBestColumn;
 
-    public CurationFeedDto(Curation curation) {
+    private boolean isLiked;
+    private boolean isScraped;
+    private long likeCount;
+
+    public CurationFeedDto(Curation curation, boolean isLiked, boolean isScraped, long likeCount) {
         this.curationId = curation.getId();
         this.title = curation.getTitle();
         this.description = curation.getDescription();
@@ -38,5 +42,9 @@ public class CurationFeedDto {
 
         // CurationType이 베스트칼럼인지 확인
         this.isBestColumn = curation.getCurationType() == CurationType.BEST_COLUMN;
+
+        this.isLiked = isLiked;
+        this.isScraped = isScraped;
+        this.likeCount = likeCount;
     }
 }

@@ -1,8 +1,6 @@
 package com.swulion.crossnote.service;
 
 import com.swulion.crossnote.client.CurationSourceClient;
-//import com.swulion.crossnote.client.KciClient;
-//import com.swulion.crossnote.client.NationalLibClient;
 import com.swulion.crossnote.client.KciClient;
 import com.swulion.crossnote.client.NlBookClient;
 import com.swulion.crossnote.dto.Curation.*;
@@ -49,12 +47,20 @@ public class CurationService {
     private final GeminiService geminiService;
     private final TerminologyService terminologyService;
 
-    // 테스트용
-    private final KciClient kciClient;
-    private final NlBookClient nlBookClient;
 
-    private final Random random = new Random(); // (랜덤 선택용)
+    // 좋아요/스크랩 dto 변환 헬퍼
+    private CurationFeedDto convertToFeedDto(Curation curation, User user) {
+        long likeCount = likeRepository.countByTargetTypeAndTargetId(ScrapTargetType.CURATION, curation.getId());
+        boolean isLiked = false;
+        boolean isScraped = false;
 
+        if (user != null) {
+            isLiked = likeRepository.existsByUserAndTargetTypeAndTargetId(user, ScrapTargetType.CURATION, curation.getId());
+            isScraped = scrapRepository.existsByUserAndTargetTypeAndTargetId(user, ScrapTargetType.CURATION, curation.getId());
+        }
+        return new CurationFeedDto(curation, isLiked, isScraped, likeCount);
+    }
+    
     /*
      * 매일 새벽 1시, 29개 카테고리에 대해 총 116개의 큐레이션을 자동 생성.
      * 명세: 카테고리당 4개 (Insight L1/L2, CrossNote L1/L2)
@@ -246,7 +252,7 @@ public class CurationService {
                         .comparingInt(this::getTypePriority) // 1차 정렬: 타입
                         .thenComparing(Curation::getCreatedAt, Comparator.reverseOrder()) // 2차 정렬: 최신순
                 )
-                .map(CurationFeedDto::new)
+                .map(curation -> convertToFeedDto(curation, user))
                 .collect(Collectors.toList());
     }
 
@@ -327,20 +333,24 @@ public class CurationService {
 
     // 2.1-1. 전체 피드 로직
     @Transactional(readOnly = true)
-    public Page<CurationFeedDto> getAllCurationFeed(List<Long> categoryIds, String curationType, String query, Pageable pageable) {
+    public Page<CurationFeedDto> getAllCurationFeed(List<Long> categoryIds,
+                                                    List<String> curationTypes,
+                                                    String query,
+                                                    Pageable pageable,
+                                                    User user) {
         // 30일 이내
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
 
         // QueryDSL 동적 쿼리 메서드 호출
         Page<Curation> resultPage = curationRepository.findDynamicFeed(
                 categoryIds,
-                curationType,
+                curationTypes,
                 query,
                 thirtyDaysAgo,
                 pageable
         );
         // Page<Curation>을 Page<CurationFeedDto>로 변환
-        return resultPage.map(CurationFeedDto::new);
+        return resultPage.map(curation -> convertToFeedDto(curation, user));
     }
 
     // 2.2. 큐레이션 상세 보기 로직
