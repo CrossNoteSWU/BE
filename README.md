@@ -45,7 +45,7 @@
 
 > project clone & build
 > ```
-> git clone 
+> git clone https://github.com/CrossNoteSWU/BE.git
 > ./gradlew clean build -x test
 > ```
 **2. Docker & Redis**
