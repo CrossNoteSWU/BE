@@ -167,9 +167,26 @@ public class NotificationService {
         notificationRepository.saveAll(notifications);
     }
 
+    // 알림 개별 삭제
+    @Transactional
+    public void deleteNotification(Long userId, Long notificationId) {
+        Notification notification = notificationRepository.findById(notificationId).orElseThrow(
+                ()->new RuntimeException("Notification not found")
+        );
+        User user = userRepository.findById(userId).orElseThrow(
+                ()->new RuntimeException("User not found")
+        );
+        if(notification.getReceiver().equals(user)) {
+            notificationRepository.delete(notification);
+        }
+        else {
+            throw new RuntimeException("Notification does not belong to user");
+        }
+    }
+
     // 알림 전체 삭제
     @Transactional
-    public void deleteNotification(Long userId) {
+    public void deleteAllNotifications(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(
                 ()->new RuntimeException("User not found")
         );
