@@ -50,10 +50,17 @@ public class NotificationController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/me")
-    public ResponseEntity<?> deleteNotification(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    @DeleteMapping("/{notificationId}")
+    public ResponseEntity<?> deleteNotification(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long notificationId) {
         Long userId = userDetails.getUser().getUserId();
-        notificationService.deleteNotification(userId);
+        notificationService.deleteNotification(userId, notificationId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<?> deleteAllNotifications(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long userId = userDetails.getUser().getUserId();
+        notificationService.deleteAllNotifications(userId);
         return ResponseEntity.ok().build();
     }
 
