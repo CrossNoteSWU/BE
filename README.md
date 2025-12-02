@@ -2,7 +2,7 @@
 “당신이 경험해 보지 못한 세계는 어떤 곳일까요?”
 # 비전공자를 위한 융합 지식 큐레이션 플랫폼, CrossNote
 
-**2025 SWU 멋쟁이사자처럼 - 슈멋사 프로젝트 1팀 백엔드 레포지토리**
+**2025 SWU 멋쟁이사자처럼 13기 - 슈멋사 프로젝트 1팀 백엔드 레포지토리**
 
 ### Background
 > 현대 사회는 한 분야의 전문성을 넘어, 다양한 분야를 넘나드는 융합적 사고와 폭넓은 이해를 요구하고 있습니다. 정보의 양은 폭발적으로 증가했지만, 오히려 개인은 소셜 미디어와 추천 알고리즘의 '필터 버블'에 갇혀 편향된 지식만을 소비하기 쉬운 환경에 놓여있습니다.
@@ -13,7 +13,7 @@
 > 이를 통해 사용자가 존재조차 인식하지 못했던 새로운 세계를 우연히 발견하고, 지적 탐험의 과정을 통해 사고의 깊이를 더하고 자신의 세계를 확장해 나가는 데 이 프로젝트의 의의가 있습니다.
 
 ### Tech Stacks
-<img src="https://img.shields.io/badge/java-007396?style=for-the-badge&logo=java&logoColor=white"> <img src="https://img.shields.io/badge/spring-6DB33F?style=for-the-badge&logo=spring&logoColor=white">  <img src="https://img.shields.io/badge/mysql-4479A1?style=for-the-badge&logo=mysql&logoColor=white"> 
+<img src="https://img.shields.io/badge/Java-007396?style=for-the-badge&logo=coffeescript&logoColor=white">  <img src="https://img.shields.io/badge/spring-6DB33F?style=for-the-badge&logo=spring&logoColor=white">  <img src="https://img.shields.io/badge/mysql-4479A1?style=for-the-badge&logo=mysql&logoColor=white"> <img src="https://img.shields.io/badge/docker-2496ED?style=for-the-badge&logo=docker&logoColor=white"> 
 
 
 ### Team Member
@@ -40,7 +40,7 @@
 >  Install dependencies
 > ```
 > sudo apt update
-> sudo apt install -y git openjpk-17-jdk
+> sudo apt install -y git openjdk-17-jdk
 > ```
 
 > project clone & build
@@ -69,8 +69,36 @@
 > sudo systemctl restart crossnote
 > ```
 
-**4. RDS(MySQL)**
-> 작성 중
+**4. RDS(MySQL) 연결 확인**
+> Connection check
+> ```
+> telnet <RDS-ENDPOINT> 3306
+> mysql -h <RDS-ENDPOINT> -u <USER> -p
+> ```
+
+**5. Nginx + HTTPS**
+> Configure Nginx site
+> ```
+> sudo nano /etc/nginx/site-available/https://cross-note.com
+> ```
+> Reload nginx
+> ```
+> sudo nginx -t
+> sudo systemctl reload nginx
+> ```
+
+**6. S3 설정**
+> IAM 권한: `s3:PutObject` 필요 <br>
+> Test upload
+> ```
+> aws s3 ls
+> ```
+
+**7. CI/CD**
+> GitHub Action
+> ```
+> chmod +x deploy.yml
+> ```
 
 
 ### Directory Structure
