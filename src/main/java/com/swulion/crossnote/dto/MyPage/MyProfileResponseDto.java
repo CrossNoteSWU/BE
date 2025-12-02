@@ -9,6 +9,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class MyProfileResponseDto {
     private Long userId;
+    private String email;
     private String name;
     private String profileImageUrl;
     private long followersCount;

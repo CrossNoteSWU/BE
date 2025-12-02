@@ -35,6 +35,7 @@ public class MyPageService {
         
         return new MyProfileResponseDto(
                 user.getUserId(),
+                user.getEmail(),
                 user.getName(),
                 user.getProfileImageUrl(),
                 user.getFollowersCount(),
