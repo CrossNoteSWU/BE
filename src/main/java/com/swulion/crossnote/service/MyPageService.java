@@ -30,6 +30,18 @@ public class MyPageService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
         
+        // 관심 분야, 전문 분야 추출
+        List<String> interestNames = new ArrayList<>();
+        List<String> expertiseNames = new ArrayList<>();
+        
+        for (UserCategoryPreference pref : user.getPreferences()) {
+            if (pref.getPreferenceType() == PreferenceType.INTEREST) {
+                interestNames.add(pref.getCategory().getCategoryName());
+            } else if (pref.getPreferenceType() == PreferenceType.EXPERTISE) {
+                expertiseNames.add(pref.getCategory().getCategoryName());
+            }
+        }
+        
         // 지식 리포트 조회
         KnowledgeReportResponseDto knowledgeReport = knowledgeReportService.getKnowledgeReport(userId);
         
@@ -40,6 +52,8 @@ public class MyPageService {
                 user.getProfileImageUrl(),
                 user.getFollowersCount(),
                 user.getFollowingsCount(),
+                interestNames,
+                expertiseNames,
                 knowledgeReport.getScores(),
                 knowledgeReport.getChartData()
         );
