@@ -30,7 +30,7 @@ public class ColumnEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    private String imageUrl = null;
+    private String imageUrl = "";
 
     private Integer likeCount = 0;
     private Integer commentCount = 0;
