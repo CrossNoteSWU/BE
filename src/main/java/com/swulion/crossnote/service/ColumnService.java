@@ -147,6 +147,9 @@ public class ColumnService {
         }
 
         List<ColumnReadResponseDto> columnReadResponseDtos = new ArrayList<>();
+        if(columnEntities.isEmpty()){
+            return columnReadResponseDtos;
+        }
         for (ColumnEntity columnEntity : columnEntities) {
             ColumnReadResponseDto columnReadResponseDto = new ColumnReadResponseDto();
             columnReadResponseDto.setColumnId(columnEntity.getColumnId());
@@ -164,6 +167,7 @@ public class ColumnService {
             columnReadResponseDto.setAuthorId(columnEntity.getColumnAutherId().getUserId());
             columnReadResponseDto.setTitle(columnEntity.getTitle());
             columnReadResponseDto.setIsBestColumn(columnEntity.isBestColumn());
+            columnReadResponseDto.setImageUrl(columnEntity.getImageUrl());
             columnReadResponseDto.setCommentCount(columnEntity.getCommentCount());
             columnReadResponseDto.setLikeCount(columnEntity.getLikeCount());
             columnReadResponseDto.setCategoryId1(categories.get(0));
@@ -347,7 +351,7 @@ public class ColumnService {
 
     /* Column 검색 */
     public List<ColumnReadResponseDto> searchColumn(ColumnSearchDto columnSearchDto) {
-        List<ColumnEntity> columnEntities = columnRepositoryImpl.findWithKeyword(columnSearchDto.getCategoryIds(), columnSearchDto.getKeyword());
+        List<ColumnEntity> columnEntities = columnRepositoryImpl.findWithKeyword(columnSearchDto.getCategoryIds() , columnSearchDto.getKeyword());
         List<ColumnReadResponseDto> columnReadResponseDtos = new ArrayList<>();
         for(ColumnEntity columnEntity : columnEntities){
             List<ColumnCategory> columnCategories = columnCategoryRepository.findByColumnId(columnEntity);
@@ -355,6 +359,7 @@ public class ColumnService {
             columnReadResponseDto.setColumnId(columnEntity.getColumnId());
             columnReadResponseDto.setAuthorId(columnEntity.getColumnAutherId().getUserId());
             columnReadResponseDto.setTitle(columnEntity.getTitle());
+            columnReadResponseDto.setImageUrl(columnEntity.getImageUrl());
             columnReadResponseDto.setIsBestColumn(columnEntity.isBestColumn());
             columnReadResponseDto.setLikeCount(columnEntity.getLikeCount());
             columnReadResponseDto.setCommentCount(columnEntity.getCommentCount());

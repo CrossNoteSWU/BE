@@ -29,7 +29,7 @@ public class ColumnEntity {
 
     private String content;
 
-    private String imageUrl;
+    private String imageUrl = null;
 
     private Integer likeCount = 0;
     private Integer commentCount = 0;
