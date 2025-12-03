@@ -24,7 +24,7 @@ public class ColumnEntity {
     @JoinColumn(name = "userId")
     private User columnAutherId;
 
-    @Column(length = 20)
+    @Column(length = 100)
     private String title;
 
     @Column(columnDefinition = "TEXT")
