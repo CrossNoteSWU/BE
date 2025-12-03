@@ -27,6 +27,7 @@ public class ColumnEntity {
     @Column(length = 20)
     private String title;
 
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     private String imageUrl = null;
