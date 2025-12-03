@@ -9,6 +9,7 @@ public class FollowUserSummaryDto {
 
     private final Long userId;
     private final String name;
+    private final String email;
     private final String profileImageUrl;
 }
 

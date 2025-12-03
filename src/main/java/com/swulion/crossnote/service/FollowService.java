@@ -132,6 +132,7 @@ public class FollowService {
         return new FollowUserSummaryDto(
                 user.getUserId(),
                 user.getName(),
+                user.getEmail(),
                 user.getProfileImageUrl()
         );
     }
