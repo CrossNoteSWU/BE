@@ -33,7 +33,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final RedisTemplate<String, Object> redisTemplate;
 
     // 배포 도메인
-    private static final String URL = "https://cross-note.com/social";
+    // private static final String URL = "https://cross-note.com/social";
+    private static final String URL = "https://likelion-1-fe-ry4u.vercel.app";
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -72,7 +73,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String type = isNewuser ? (provider + "-signup") : "login";
 
         // 6. URL 생성
-        // 최종 URL 예시: https://cross-note.com/social?provider=kakao&type=login&accessToken...
+        // 최종 URL 예시: https://likelion-1-fe-ry4u.vercel.app/social?provider=kakao&type=login&accessToken...
         String targetUrl = UriComponentsBuilder.fromUriString(URL)
                 .queryParam("provider", provider)
                 .queryParam("type", type)
