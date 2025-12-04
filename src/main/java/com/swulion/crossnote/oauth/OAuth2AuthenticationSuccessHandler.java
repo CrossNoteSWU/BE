@@ -34,7 +34,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     // 배포 도메인
     // private static final String URL = "https://cross-note.com/social";
-    private static final String URL = "https://likelion-1-fe-ry4u.vercel.app";
+    private static final String URL = "https://likelion-1-fe-ry4u.vercel.app/social";
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
