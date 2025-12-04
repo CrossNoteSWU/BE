@@ -191,7 +191,11 @@ public class CurationService {
 
         // 2. '오늘(00:00 이후)' 생성된 큐레이션 중 관심 분야 필터링
         ZoneId zoneId = ZoneId.of("Asia/Seoul");
-        LocalDateTime startOfToday = LocalDate.now(zoneId).atStartOfDay();
+        //LocalDateTime startOfToday = LocalDate.now(zoneId).atStartOfDay();
+        // 테스트용 코드: 1년
+        // LocalDateTime startOfToday = LocalDateTime.now().minusYears(1);
+        // 수정 코드: 어제 00:00 (하루 전으로 범위 확대)
+        LocalDateTime startOfToday = LocalDate.now(zoneId).minusDays(1).atStartOfDay();
 
         List<Curation> candidates = curationRepository
                 .findByCategory_CategoryIdInAndCreatedAtAfter(preferenceCategoryIds, startOfToday);
